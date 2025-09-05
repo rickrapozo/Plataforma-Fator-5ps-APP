@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  body {
+    @apply bg-light-gray text-dark-gray;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', sans-serif;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-glass border border-white/20 rounded-3xl shadow-glass;
+  }
+  
+  .neuro-button {
+    @apply bg-gradient-to-br from-light-gray to-medium-gray shadow-neuro rounded-full transition-all duration-300;
+  }
+  
+  .neuro-button:hover {
+    @apply shadow-lg transform scale-105;
+  }
+  
+  .neuro-button:active {
+    @apply transform scale-95;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-royal-gold to-bright-gold bg-clip-text text-transparent;
+  }
+  
+  .mobile-safe-area {
+    @apply pb-safe-area-inset-bottom;
+  }
+}
+
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-light-gray;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-sage-green rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-forest-green;
+}
+
+/* PWA specific styles */
+@media (display-mode: standalone) {
+  body {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+
+/* Safe area for iOS devices */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
