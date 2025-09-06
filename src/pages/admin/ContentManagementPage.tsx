@@ -17,7 +17,8 @@ import {
   BookOpen,
   Headphones,
   RefreshCw,
-  Shield
+  Shield,
+  Clock
 } from 'lucide-react'
 import { useAppStore } from '../../stores/useAppStore'
 import { useAdminAuth } from '../../hooks/useSecureAuth'
@@ -66,7 +67,7 @@ const ContentManagementPage: React.FC = () => {
       try {
         await logAction('access_content_management', { page: 'ContentManagementPage' })
         const contentData = await dataService.getContentMetrics()
-        setContents(contentData)
+        setContents(contentData as Content[])
       } catch (error) {
         console.error('Erro ao carregar conteúdos:', error)
         // Fallback to mock data if needed
@@ -233,15 +234,7 @@ const ContentManagementPage: React.FC = () => {
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'published': return 'text-success-green'
-      case 'draft': return 'text-warning-yellow'
-      case 'archived': return 'text-pearl-white/60'
-      case 'scheduled': return 'text-bright-gold'
-      default: return 'text-pearl-white/60'
-    }
-  }
+
 
   const getStatusBadge = (status: string) => {
     const colors = {
@@ -277,13 +270,7 @@ const ContentManagementPage: React.FC = () => {
     )
   }
 
-  const handleSelectAll = () => {
-    if (selectedContents.length === currentContents.length) {
-      setSelectedContents([])
-    } else {
-      setSelectedContents(currentContents.map(content => content.id))
-    }
-  }
+
 
   const handleBulkAction = (action: string) => {
     console.log(`Ação em lote: ${action} para conteúdos:`, selectedContents)

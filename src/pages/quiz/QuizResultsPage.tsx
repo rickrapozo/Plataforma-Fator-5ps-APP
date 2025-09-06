@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { Brain, Heart, Zap, Target, Trophy, Download, Share2, ArrowRight, CheckCircle, AlertTriangle, Mail } from 'lucide-react'
+import { Brain, Heart, Zap, Target, Trophy, ArrowRight, CheckCircle, AlertTriangle, Mail } from 'lucide-react'
 import Logo from '../../components/shared/Logo'
 import { getCapitalizedFirstName, getCapitalizedFullName } from '../../utils/nameUtils'
 
@@ -27,7 +27,7 @@ interface PersonalizedDiagnosis {
 
 function QuizResultsPage() {
   const navigate = useNavigate()
-  const [answers, setAnswers] = useState<number[]>([])
+  const [, setAnswers] = useState<Record<string, any>>({})
   const [diagnosis, setDiagnosis] = useState<DiagnosisResult[]>([])
   const [personalizedResult, setPersonalizedResult] = useState<PersonalizedDiagnosis | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -122,17 +122,17 @@ function QuizResultsPage() {
       // Função para adicionar cabeçalho da página
       const addPageHeader = () => {
         // Fundo do cabeçalho com gradiente simulado
-        doc.setFillColor(...colors.deepForest);
+        doc.setFillColor(colors.deepForest[0], colors.deepForest[1], colors.deepForest[2]);
         doc.rect(0, 0, pageWidth, 25, 'F');
         
         // Logo/Título no cabeçalho
-        doc.setTextColor(...colors.royalGold);
+        doc.setTextColor(colors.royalGold[0], colors.royalGold[1], colors.royalGold[2]);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
         doc.text('FATOR ESSENCIAL', margin, 15);
         
         // Data no canto direito
-        doc.setTextColor(...colors.pearlWhite);
+        doc.setTextColor(colors.pearlWhite[0], colors.pearlWhite[1], colors.pearlWhite[2]);
         doc.setFontSize(8);
         doc.text(new Date().toLocaleDateString('pt-BR'), pageWidth - margin, 15, { align: 'right' });
       };
@@ -143,7 +143,7 @@ function QuizResultsPage() {
         
         if (isMainTitle) {
           // Título principal com fundo colorido
-          doc.setFillColor(...colors.royalGold);
+          doc.setFillColor(colors.royalGold[0], colors.royalGold[1], colors.royalGold[2]);
           doc.rect(margin - 5, yPosition - 5, maxWidth + 10, 20, 'F');
           
           doc.setTextColor(255, 255, 255);
@@ -153,11 +153,11 @@ function QuizResultsPage() {
           yPosition += 25;
         } else {
           // Títulos de seção com linha decorativa
-          doc.setDrawColor(...colors.royalGold);
+          doc.setDrawColor(colors.royalGold[0], colors.royalGold[1], colors.royalGold[2]);
           doc.setLineWidth(2);
           doc.line(margin, yPosition, margin + 30, yPosition);
           
-          doc.setTextColor(...colors.deepForest);
+          doc.setTextColor(colors.deepForest[0], colors.deepForest[1], colors.deepForest[2]);
           doc.setFontSize(14);
           doc.setFont('helvetica', 'bold');
           doc.text(title, margin, yPosition + 12);
@@ -166,7 +166,7 @@ function QuizResultsPage() {
         
         // Conteúdo da seção
         if (content) {
-          doc.setTextColor(...colors.forestGreen);
+          doc.setTextColor(colors.forestGreen[0], colors.forestGreen[1], colors.forestGreen[2]);
           doc.setFontSize(11);
           doc.setFont('helvetica', 'normal');
           
@@ -187,18 +187,18 @@ function QuizResultsPage() {
         checkNewPage(50);
         
         // Fundo do card
-        doc.setFillColor(...colors.lightGray);
+        doc.setFillColor(colors.lightGray[0], colors.lightGray[1], colors.lightGray[2]);
         doc.rect(margin, yPosition - 5, maxWidth, 45, 'F');
         
         // Borda lateral colorida baseada na pontuação
         const scoreColor = pillar.score >= 8 ? colors.sageGreen : 
                           pillar.score >= 6 ? colors.royalGold : 
                           colors.forestGreen;
-        doc.setFillColor(...scoreColor);
+        doc.setFillColor(scoreColor[0], scoreColor[1], scoreColor[2]);
         doc.rect(margin, yPosition - 5, 4, 45, 'F');
         
         // Número do pilar
-        doc.setFillColor(...colors.royalGold);
+        doc.setFillColor(colors.royalGold[0], colors.royalGold[1], colors.royalGold[2]);
         doc.circle(margin + 15, yPosition + 8, 8, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(12);
@@ -206,19 +206,19 @@ function QuizResultsPage() {
         doc.text((index + 1).toString(), margin + 15, yPosition + 12, { align: 'center' });
         
         // Nome do pilar
-        doc.setTextColor(...colors.deepForest);
+        doc.setTextColor(colors.deepForest[0], colors.deepForest[1], colors.deepForest[2]);
         doc.setFontSize(13);
         doc.setFont('helvetica', 'bold');
         doc.text(pillar.pillar.toUpperCase(), margin + 30, yPosition + 5);
         
         // Pontuação e status
-        doc.setTextColor(...scoreColor);
+        doc.setTextColor(scoreColor[0], scoreColor[1], scoreColor[2]);
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.text(`${pillar.score}/10 - ${pillar.status.toUpperCase()}`, margin + 30, yPosition + 15);
         
         // Descrição
-        doc.setTextColor(...colors.forestGreen);
+        doc.setTextColor(colors.forestGreen[0], colors.forestGreen[1], colors.forestGreen[2]);
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         const descLines = doc.splitTextToSize(pillar.description, maxWidth - 40);
@@ -236,22 +236,22 @@ function QuizResultsPage() {
       yPosition = 40;
 
       // Título principal do relatório
-      doc.setFillColor(...colors.deepForest);
+      doc.setFillColor(colors.deepForest[0], colors.deepForest[1], colors.deepForest[2]);
       doc.rect(0, yPosition - 10, pageWidth, 35, 'F');
       
-      doc.setTextColor(...colors.royalGold);
+      doc.setTextColor(colors.royalGold[0], colors.royalGold[1], colors.royalGold[2]);
       doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
       doc.text('RELATÓRIO DE DIAGNÓSTICO PESSOAL', pageWidth / 2, yPosition + 5, { align: 'center' });
       
-      doc.setTextColor(...colors.pearlWhite);
+      doc.setTextColor(colors.pearlWhite[0], colors.pearlWhite[1], colors.pearlWhite[2]);
       doc.setFontSize(14);
       doc.text('Plataforma Fator Essencial', pageWidth / 2, yPosition + 18, { align: 'center' });
       
       yPosition += 45;
 
       // Informações do usuário em destaque
-      doc.setFillColor(...colors.royalGold);
+      doc.setFillColor(colors.royalGold[0], colors.royalGold[1], colors.royalGold[2]);
       doc.rect(margin, yPosition, maxWidth, 25, 'F');
       
       doc.setTextColor(255, 255, 255);
@@ -275,7 +275,7 @@ function QuizResultsPage() {
         addSection('PLANO DE AÇÃO', '');
         personalizedResult.actionPlan.forEach((action: string, index: number) => {
           checkNewPage();
-          doc.setTextColor(...colors.forestGreen);
+          doc.setTextColor(colors.forestGreen[0], colors.forestGreen[1], colors.forestGreen[2]);
           doc.setFontSize(11);
           doc.text(`${index + 1}. ${action}`, margin + 5, yPosition);
           yPosition += 8;
@@ -287,7 +287,7 @@ function QuizResultsPage() {
 
       // Análise dos 5 pilares
       checkNewPage(30);
-      doc.setFillColor(...colors.sageGreen);
+      doc.setFillColor(colors.sageGreen[0], colors.sageGreen[1], colors.sageGreen[2]);
       doc.rect(margin - 5, yPosition - 5, maxWidth + 10, 20, 'F');
       
       doc.setTextColor(255, 255, 255);
@@ -311,12 +311,12 @@ function QuizResultsPage() {
         }
         
         // Linha decorativa no rodapé
-        doc.setDrawColor(...colors.royalGold);
+        doc.setDrawColor(colors.royalGold[0], colors.royalGold[1], colors.royalGold[2]);
         doc.setLineWidth(1);
         doc.line(margin, pageHeight - 25, pageWidth - margin, pageHeight - 25);
         
         // Informações do rodapé
-        doc.setTextColor(...colors.forestGreen);
+        doc.setTextColor(colors.forestGreen[0], colors.forestGreen[1], colors.forestGreen[2]);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         doc.text(

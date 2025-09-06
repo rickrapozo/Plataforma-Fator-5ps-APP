@@ -16,18 +16,13 @@ import {
   Zap,
   Server,
   Clock,
-  BarChart3,
-  PieChart,
-  LineChart,
+
   Shield
 } from 'lucide-react'
-import { useAppStore } from '../../stores/useAppStore'
+
 import { useAdminAuth } from '../../hooks/useSecureAuth'
 import useRealtimeMetrics from '../../hooks/useRealtimeMetrics'
-import { SystemMetrics } from '../../services/monitoringService'
-
 const RealtimeMetricsPage: React.FC = () => {
-  const { user } = useAppStore()
   const navigate = useNavigate()
   const { isLoading: authLoading, isAuthorized, error: authError, logAction } = useAdminAuth()
   const [selectedTimeRange, setSelectedTimeRange] = useState('1h')
@@ -43,7 +38,6 @@ const RealtimeMetricsPage: React.FC = () => {
     getActiveUsers,
     getErrorRate,
     getPerformanceScore,
-    isHealthy,
     hasWarnings,
     isCritical,
     hasAnalysis
@@ -270,7 +264,7 @@ const RealtimeMetricsPage: React.FC = () => {
             title="Usuários Ativos"
             value={getActiveUsers(30)}
             icon={<Users className="w-6 h-6 text-royal-gold" />}
-            trend={getMetricsTrend('active_users')}
+            trend={getMetricsTrend('activeUsers')}
             subtitle="Últimos 30 minutos"
           />
           
@@ -319,10 +313,10 @@ const RealtimeMetricsPage: React.FC = () => {
           
           <MetricCard
             title="Tempo de Resposta"
-            value={`${metrics.current?.response_time?.toFixed(0) || 0}ms`}
+            value={`${metrics.current?.responseTime?.toFixed(0) || 0}ms`}
             icon={<Clock className="w-6 h-6 text-royal-gold" />}
-            trend={getMetricsTrend('response_time')}
-            color={metrics.current && metrics.current.response_time > 2000 ? 'text-error-red' : metrics.current && metrics.current.response_time > 1000 ? 'text-warning-yellow' : 'text-success-green'}
+            trend={getMetricsTrend('responseTime')}
+            color={metrics.current && metrics.current.responseTime > 2000 ? 'text-error-red' : metrics.current && metrics.current.responseTime > 1000 ? 'text-warning-yellow' : 'text-success-green'}
           />
         </div>
 
@@ -429,7 +423,7 @@ const RealtimeMetricsPage: React.FC = () => {
         {metrics.errors.length > 0 && (
           <ChartCard title="Logs de Erro Recentes">
             <div className="space-y-3 max-h-64 overflow-y-auto">
-              {metrics.errors.slice(-10).reverse().map((error, index) => (
+              {metrics.errors.slice(-10).reverse().map((error) => (
                 <div key={error.id} className="p-3 bg-error-red/10 border border-error-red/20 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className={`px-2 py-1 rounded text-xs font-semibold ${

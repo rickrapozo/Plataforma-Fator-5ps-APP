@@ -148,7 +148,7 @@ class AuthMiddleware {
     try {
       const sessionResult = await securityService.validateSession(userId)
       
-      if (!sessionResult.valid) {
+      if (!sessionResult.isValid) {
         return {
           valid: false,
           reason: 'Invalid or expired session'
@@ -196,7 +196,11 @@ class AuthMiddleware {
 
   // Middleware para validação de senha
   validatePassword(password: string): { valid: boolean; errors: string[] } {
-    return securityService.validatePasswordStrength(password)
+    const result = securityService.validatePasswordStrength(password)
+    return {
+      valid: result.isValid,
+      errors: result.errors
+    }
   }
 
   // Middleware para logging de ações

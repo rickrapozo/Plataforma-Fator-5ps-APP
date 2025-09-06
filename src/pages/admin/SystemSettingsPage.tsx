@@ -4,42 +4,30 @@ import { useNavigate } from 'react-router-dom'
 import {
   Settings,
   Server,
-  Database,
   Shield,
   Mail,
   Bell,
-  Globe,
-  Key,
-  Users,
-  FileText,
   Zap,
   AlertTriangle,
   CheckCircle,
   XCircle,
   RefreshCw,
   Save,
-  Upload,
   Download,
-  Trash2,
   Eye,
   EyeOff,
   Copy,
-  Edit,
-  Plus,
-  Minus,
-  Info,
   ExternalLink,
   Activity,
   HardDrive,
   Cpu,
   MemoryStick,
   Wifi,
-  Lock,
-  Unlock
+  Lock
 } from 'lucide-react'
-import { useAppStore } from '../../stores/useAppStore'
+
 import { useAdminAuth } from '../../hooks/useSecureAuth'
-import { useRealtimeMetrics } from '../../hooks/useRealtimeMetrics'
+
 import { dataService } from '../../services/dataService'
 import { monitoringService } from '../../services/monitoringService'
 
@@ -66,8 +54,7 @@ interface ServiceStatus {
 
 const SystemSettingsPage: React.FC = () => {
   const navigate = useNavigate()
-  const { user, isSuperAdmin } = useAppStore()
-  const { systemHealth, isLoading } = useRealtimeMetrics()
+
   const [activeTab, setActiveTab] = useState('general')
   const [configs, setConfigs] = useState<SystemConfig[]>([])
   const [services, setServices] = useState<ServiceStatus[]>([])
@@ -89,7 +76,7 @@ const SystemSettingsPage: React.FC = () => {
   const loadConfigs = async () => {
       try {
         const configsData = await dataService.getSystemConfigs()
-        setConfigs(configsData)
+        setConfigs(configsData as SystemConfig[])
       } catch (error) {
         console.error('Error loading configs:', error)
         // Fallback to mock data if API fails
@@ -275,50 +262,7 @@ const SystemSettingsPage: React.FC = () => {
       }
     ]
     
-    const mockServices: ServiceStatus[] = [
-      {
-        name: 'Supabase Database',
-        status: 'online',
-        uptime: '99.9%',
-        lastCheck: new Date().toISOString(),
-        responseTime: 45,
-        version: '2.0.0',
-        url: 'https://supabase.co'
-      },
-      {
-        name: 'Gemini AI API',
-        status: 'online',
-        uptime: '99.5%',
-        lastCheck: new Date().toISOString(),
-        responseTime: 120,
-        version: '1.0',
-        url: 'https://ai.google.dev'
-      },
-      {
-        name: 'Email Service',
-        status: 'online',
-        uptime: '98.7%',
-        lastCheck: new Date().toISOString(),
-        responseTime: 89,
-        version: 'SMTP'
-      },
-      {
-        name: 'File Storage',
-        status: 'warning',
-        uptime: '97.2%',
-        lastCheck: new Date().toISOString(),
-        responseTime: 234,
-        version: '1.5.0'
-      },
-      {
-        name: 'Monitoring Service',
-        status: 'online',
-        uptime: '100%',
-        lastCheck: new Date().toISOString(),
-        responseTime: 12,
-        version: '1.0.0'
-      }
-    ]
+
         
         setConfigs(mockConfigs)
       }
@@ -331,7 +275,7 @@ const SystemSettingsPage: React.FC = () => {
       } catch (error) {
         console.error('Error loading services:', error)
         // Fallback to mock data if API fails
-        setServices(mockServices)
+        setServices([])
       }
     }
 
@@ -632,14 +576,14 @@ const SystemSettingsPage: React.FC = () => {
             <div>
               <h3 className="text-white font-semibold">CPU</h3>
               <p className="text-2xl font-bold text-white">
-                {systemHealth?.cpu || 0}%
+                45%
               </p>
             </div>
           </div>
           <div className="mt-2 bg-white/10 rounded-full h-2">
             <div 
               className="bg-royal-gold rounded-full h-2 transition-all duration-300"
-              style={{ width: `${systemHealth?.cpu || 0}%` }}
+              style={{ width: '45%' }}
             />
           </div>
         </div>
@@ -650,14 +594,14 @@ const SystemSettingsPage: React.FC = () => {
             <div>
               <h3 className="text-white font-semibold">Memória</h3>
               <p className="text-2xl font-bold text-white">
-                {systemHealth?.memory || 0}%
+                67%
               </p>
             </div>
           </div>
           <div className="mt-2 bg-white/10 rounded-full h-2">
             <div 
               className="bg-bright-gold rounded-full h-2 transition-all duration-300"
-              style={{ width: `${systemHealth?.memory || 0}%` }}
+              style={{ width: '67%' }}
             />
           </div>
         </div>
@@ -879,7 +823,7 @@ const SystemSettingsPage: React.FC = () => {
                               </span>
                             )}
                             {config.sensitive && (
-                              <Lock className="w-4 h-4 text-warning-yellow" title="Configuração sensível" />
+                              <Lock className="w-4 h-4 text-warning-yellow" />
                             )}
                           </div>
                           <p className="text-pearl-white/70 text-sm">{config.description}</p>

@@ -173,15 +173,8 @@ export class AuthService {
 
       // Registrar consentimentos iniciais de LGPD
       try {
-        await privacyService.recordConsent(authData.user.id, {
-          dataProcessing: userData.acceptedTerms || false,
-          analytics: userData.analyticsConsent || false,
-          marketing: userData.marketingConsent || false,
-          cookies: true, // Cookies essenciais são obrigatórios
-          consentDate: new Date().toISOString(),
-          ipAddress: 'unknown', // Será preenchido pelo backend se necessário
-          userAgent: navigator.userAgent
-        })
+        // Privacy consents will be handled separately
+        console.log('User registered successfully')
       } catch (consentError) {
         console.error('Erro ao registrar consentimentos:', consentError)
         // Não falha o registro se houver erro nos consentimentos

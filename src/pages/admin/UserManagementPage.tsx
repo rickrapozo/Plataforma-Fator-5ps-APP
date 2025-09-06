@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom'
 import {
   Users,
   Search,
-  Filter,
   Plus,
   Edit,
   Trash2,
@@ -14,7 +13,6 @@ import {
   Calendar,
   Download,
   Upload,
-  MoreVertical,
   Eye,
   Ban,
   CheckCircle,
@@ -22,7 +20,7 @@ import {
   AlertTriangle,
   RefreshCw
 } from 'lucide-react'
-import { useAppStore } from '../../stores/useAppStore'
+
 import useRealtimeMetrics from '../../hooks/useRealtimeMetrics'
 import { useAdminAuth } from '../../hooks/useSecureAuth'
 import { dataService } from '../../services/dataService'
@@ -30,14 +28,11 @@ import type { UserMetrics } from '../../services/dataService'
 
 const UserManagementPage: React.FC = () => {
   const navigate = useNavigate()
-  const { user } = useAppStore()
   const [users, setUsers] = useState<UserMetrics[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [filterRole, setFilterRole] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
-  const [showUserModal, setShowUserModal] = useState(false)
-  const [editingUser, setEditingUser] = useState<UserMetrics | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const usersPerPage = 10
 
@@ -184,11 +179,6 @@ const UserManagementPage: React.FC = () => {
     console.log(`Ação em lote: ${action} para usuários:`, selectedUsers)
     // Implementar ações em lote
     setSelectedUsers([])
-  }
-
-  const handleEditUser = (user: UserMetrics) => {
-    setEditingUser(user)
-    setShowUserModal(true)
   }
 
   const handleDeleteUser = (userId: string) => {
@@ -437,7 +427,7 @@ const UserManagementPage: React.FC = () => {
                       <td className="p-4">
                         <div className="flex items-center space-x-2">
                           <button
-                            onClick={() => handleEditUser(user)}
+                            onClick={() => console.log('Edit user:', user.id)}
                             className="p-2 text-royal-gold hover:bg-royal-gold/20 rounded-lg transition-colors"
                             title="Editar usuário"
                           >

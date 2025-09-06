@@ -1,14 +1,13 @@
 import React, { useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Zap, Info, RefreshCw, Shield } from 'lucide-react'
+import { ArrowLeft, Info, RefreshCw, Shield } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useAppStore } from '../../stores/useAppStore'
+
 import { useAdminAuth } from '../../hooks/useSecureAuth'
 import WebhookTester from '../../components/debug/WebhookTester'
 
 const WebhookTestPage: React.FC = () => {
   const navigate = useNavigate()
-  const { isAdmin } = useAppStore()
   const { isLoading: authLoading, isAuthorized, error: authError, logAction } = useAdminAuth()
 
   // Register access action

@@ -49,9 +49,13 @@ const TherapistAIPage: React.FC = () => {
     }
     
     // Personalização baseada nos resultados do onboarding
-    if (onboardingResults?.primaryGoals?.length > 0) {
-      const primaryGoal = onboardingResults.primaryGoals[0]
-      welcomeContent += `Lembro que seu foco principal é ${primaryGoal.toLowerCase()}. `
+    if (onboardingResults) {
+      const avgScore = (onboardingResults.thought + onboardingResults.feeling + onboardingResults.emotion + onboardingResults.action + onboardingResults.result) / 5
+      if (avgScore < 3) {
+        welcomeContent += `Vejo que você tem enfrentado alguns desafios. `
+      } else if (avgScore > 4) {
+        welcomeContent += `Que bom ver que você está em um bom momento! `
+      }
     }
     
     welcomeContent += `Estou aqui para te apoiar em cada passo, seja para fortalecer sua mente, cuidar do seu corpo, ou encontrar equilíbrio emocional. Vamos conversar sobre o que está em seu coração hoje?`
@@ -63,14 +67,16 @@ const TherapistAIPage: React.FC = () => {
       'Como melhorar minha energia física?'
     ]
     
-    if (onboardingResults?.primaryGoals?.includes('Reduzir ansiedade')) {
-      personalizedSuggestions.push('Exercícios para acalmar a ansiedade')
-    } else if (onboardingResults?.primaryGoals?.includes('Melhorar autoestima')) {
-      personalizedSuggestions.push('Como fortalecer minha autoconfiança?')
-    } else if (onboardingResults?.primaryGoals?.includes('Gerenciar estresse')) {
-      personalizedSuggestions.push('Estratégias para lidar com o estresse')
-    } else {
-      personalizedSuggestions.push('Como manter minha motivação?')
+    if (onboardingResults) {
+      if (onboardingResults.emotion < 3) {
+        personalizedSuggestions.push('Exercícios para acalmar a ansiedade')
+      } else if (onboardingResults.thought < 3) {
+        personalizedSuggestions.push('Como fortalecer minha autoconfiança?')
+      } else if (onboardingResults.feeling < 3) {
+        personalizedSuggestions.push('Estratégias para lidar com o estresse')
+      } else {
+        personalizedSuggestions.push('Como manter minha motivação?')
+      }
     }
     
     return {

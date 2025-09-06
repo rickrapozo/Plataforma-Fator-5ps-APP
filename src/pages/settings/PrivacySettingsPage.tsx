@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   Shield,
-  Eye,
-  EyeOff,
+
   Download,
   Trash2,
   Mail,
@@ -17,7 +16,7 @@ import {
   AlertTriangle,
   Info,
   Lock,
-  Unlock,
+
   History,
   Settings
 } from 'lucide-react'
@@ -31,7 +30,7 @@ const PrivacySettingsPage: React.FC = () => {
   const [exportRequests, setExportRequests] = useState<DataExportRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [showHistory, setShowHistory] = useState(false)
+
   const [activeTab, setActiveTab] = useState<'settings' | 'history' | 'requests'>('settings')
 
   useEffect(() => {

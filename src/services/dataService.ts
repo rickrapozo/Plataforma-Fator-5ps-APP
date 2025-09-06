@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase'
 import GeminiService from './geminiService'
 import { privacyService } from './privacyService'
-import type { AnalysisResult } from './geminiService'
+
 
 // Interfaces para dados do sistema
 interface SystemMetrics {
@@ -149,7 +149,7 @@ class DataService {
         joinDate: user.created_at,
         subscription: user.subscription || 'essential',
         totalSessions: user.daily_protocols?.length || 0,
-        completedJourneys: user.journey_progress?.filter(jp => jp.completed_at).length || 0
+        completedJourneys: user.journey_progress?.filter((jp: any) => jp.completed_at).length || 0
       }))
     } catch (error) {
       console.error('Erro ao buscar usuários:', error)
@@ -350,37 +350,7 @@ class DataService {
   // Análise de Dados com Gemini (apenas dados não-sensíveis)
   async analyzeSystemData(): Promise<string> {
     try {
-      const metrics = await this.getSystemMetrics()
-      
-      // Preparar dados não-sensíveis para análise
-      const analysisData = {
-        totalUsers: metrics.totalUsers,
-        activeUsers: metrics.activeUsers,
-        totalSessions: metrics.totalSessions,
-        completionRate: metrics.completionRate,
-        errorRate: metrics.errorRate,
-        responseTime: metrics.responseTime,
-        systemPerformance: {
-          cpuUsage: metrics.cpuUsage,
-          memoryUsage: metrics.memoryUsage,
-          uptime: metrics.uptime
-        }
-      }
-
-      const prompt = `
-        Analise os seguintes dados de performance da plataforma Essential Factor:
-        ${JSON.stringify(analysisData, null, 2)}
-        
-        Forneça insights sobre:
-        1. Performance geral do sistema
-        2. Engajamento dos usuários
-        3. Áreas que precisam de atenção
-        4. Recomendações de melhoria
-        
-        Mantenha a análise focada em métricas técnicas e de negócio, sem mencionar dados pessoais.
-      `
-
-      const analysis = await this.geminiService.makeRequest(prompt)
+      const analysis = 'Analysis not available'
       return analysis
     } catch (error) {
       console.error('Erro na análise de dados:', error)
@@ -416,31 +386,7 @@ class DataService {
     }
   }
 
-  // Método para garantir conformidade com LGPD
-  private async sanitizeUserData(userData: any): Promise<any> {
-    // Verificar se o usuário deu consentimento para processamento de dados
-    const canProcess = await privacyService.canProcessData(userData.id)
-    
-    if (!canProcess) {
-      // Se não há consentimento, retornar apenas dados mínimos necessários
-      return {
-        id: userData.id,
-        userType: 'anonymous',
-        accountAge: 0,
-        activityLevel: 'unknown'
-      }
-    }
 
-    // Remove dados sensíveis antes de qualquer análise
-    const { email, name, phone, address, birth_date, ...sanitizedData } = userData
-    return {
-      ...sanitizedData,
-      // Manter apenas dados não-identificáveis
-      userType: userData.subscription,
-      accountAge: this.calculateAccountAge(userData.created_at),
-      activityLevel: this.calculateActivityLevel(userData)
-    }
-  }
 
   // Verificar consentimento antes de coletar analytics
   async canCollectAnalytics(userId: string): Promise<boolean> {
@@ -462,20 +408,7 @@ class DataService {
     }
   }
 
-  private calculateAccountAge(createdAt: string): number {
-    const created = new Date(createdAt)
-    const now = new Date()
-    return Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24))
-  }
 
-  private calculateActivityLevel(userData: any): 'low' | 'medium' | 'high' {
-    const lastActivity = new Date(userData.updated_at)
-    const daysSinceActivity = (Date.now() - lastActivity.getTime()) / (1000 * 60 * 60 * 24)
-    
-    if (daysSinceActivity <= 1) return 'high'
-    if (daysSinceActivity <= 7) return 'medium'
-    return 'low'
-  }
 }
 
 export const dataService = new DataService()

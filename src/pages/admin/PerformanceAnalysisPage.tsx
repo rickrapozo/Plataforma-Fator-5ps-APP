@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Activity, Zap, Clock, TrendingUp, BarChart3, PieChart, LineChart, Download, RefreshCw, Shield } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAppStore } from '../../stores/useAppStore'
+
 import { useAdminAuth } from '../../hooks/useSecureAuth'
 import PerformanceOptimizer from '../../components/admin/PerformanceOptimizer'
 import { metricsCache, systemCache } from '../../utils/cacheManager'
@@ -27,7 +27,6 @@ interface CacheStats {
 }
 
 const PerformanceAnalysisPage: React.FC = () => {
-  const { user } = useAppStore()
   const navigate = useNavigate()
   const { isLoading: authLoading, isAuthorized, error: authError, logAction } = useAdminAuth()
   const [activeTab, setActiveTab] = useState<'overview' | 'optimizer' | 'cache' | 'history'>('overview')
@@ -119,7 +118,7 @@ const PerformanceAnalysisPage: React.FC = () => {
     setCacheStats({
       totalEntries: metricsStats.size + systemStats.size,
       hitRate: (metricsStats.hitRate + systemStats.hitRate) / 2,
-      missRate: (metricsStats.missRate + systemStats.missRate) / 2,
+      missRate: (100 - metricsStats.hitRate + 100 - systemStats.hitRate) / 2,
       totalSize: metricsStats.size + systemStats.size,
       oldestEntry: new Date().toISOString(),
       newestEntry: new Date().toISOString()

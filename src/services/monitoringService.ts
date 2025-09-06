@@ -35,11 +35,11 @@ interface ErrorLog {
 
 class MonitoringService {
   private static instance: MonitoringService
-  private alerts: SystemAlert[] = []
+
   private activities: UserActivity[] = []
   private errors: ErrorLog[] = []
   private sessionId: string
-  private startTime: number
+
   private pageViews: Map<string, number> = new Map()
   private apiCalls: number = 0
   private errorCount: number = 0
@@ -52,7 +52,6 @@ class MonitoringService {
 
   constructor() {
     this.sessionId = this.generateSessionId()
-    this.startTime = Date.now()
     this.initializeMonitoring()
   }
 
@@ -138,7 +137,7 @@ class MonitoringService {
     this.activities.push(activity)
   }
 
-  trackUserAction(action: string, page: string, userId?: string, metadata?: any) {
+  trackUserAction(action: string, page: string, userId?: string) {
     const activity: UserActivity = {
       user_id: userId || 'anonymous',
       action,
