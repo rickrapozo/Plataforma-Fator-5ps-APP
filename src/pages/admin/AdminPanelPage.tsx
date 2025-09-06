@@ -3,11 +3,11 @@ import { motion } from 'framer-motion'
 import { useNavigate, Link } from 'react-router-dom'
 import { 
   Users, Settings, BarChart3, Shield, 
-  Crown, Brain, BookOpen, MessageSquare,
-  Activity, UserCheck, AlertTriangle,
-  FileText, TrendingUp, CheckCircle,
+  Crown, Brain, BookOpen,
+  Activity, AlertTriangle,
+  FileText, CheckCircle,
   XCircle, Zap, Eye, Server,
-  Clock, RefreshCw, Database, Globe
+  RefreshCw, Database, Globe
 } from 'lucide-react'
 import { useAppStore } from '../../stores/useAppStore'
 import useRealtimeMetrics from '../../hooks/useRealtimeMetrics'
@@ -15,7 +15,7 @@ import { useAdminAuth } from '../../hooks/useSecureAuth'
 import NotificationSystem from '../../components/admin/NotificationSystem'
 
 const AdminPanelPage: React.FC = () => {
-  const { user, isAdmin, isSuperAdmin } = useAppStore()
+  const { user, isSuperAdmin } = useAppStore()
   const [activeTab, setActiveTab] = useState('overview')
   const navigate = useNavigate()
   
@@ -24,8 +24,7 @@ const AdminPanelPage: React.FC = () => {
     getActiveUsers,
     getPerformanceScore,
     isHealthy,
-    hasWarnings,
-    isCritical
+    hasWarnings
   } = useRealtimeMetrics({ updateInterval: 60000 })
 
   const { isLoading, isAuthorized, error, logAction } = useAdminAuth()
@@ -99,7 +98,7 @@ const AdminPanelPage: React.FC = () => {
     },
     {
       label: 'Visualizações',
-      value: (metrics.current?.page_views || 0).toString(),
+      value: (metrics.current?.totalUsers || 0).toString(),
       change: '+8%',
       icon: Eye,
       color: 'text-royal-gold'
@@ -598,11 +597,11 @@ const AdminPanelPage: React.FC = () => {
                     </div>
                     <div className="bg-white/5 rounded-lg p-4">
                       <p className="text-pearl-white/60 text-sm">CPU</p>
-                      <p className="text-white font-semibold">{(metrics.current?.cpu_usage || 0).toFixed(1)}%</p>
+                      <p className="text-white font-semibold">{(metrics.current?.cpuUsage || 0).toFixed(1)}%</p>
                     </div>
                     <div className="bg-white/5 rounded-lg p-4">
                       <p className="text-pearl-white/60 text-sm">Memória</p>
-                      <p className="text-white font-semibold">{(metrics.current?.memory_usage || 0).toFixed(1)}%</p>
+                      <p className="text-white font-semibold">{(metrics.current?.memoryUsage || 0).toFixed(1)}%</p>
                     </div>
                   </div>
                 </div>

@@ -148,7 +148,7 @@ class AuthMiddleware {
     try {
       const sessionResult = await securityService.validateSession(userId)
       
-      if (!sessionResult.isValid) {
+      if (!sessionResult.valid) {
         return {
           valid: false,
           reason: 'Invalid or expired session'

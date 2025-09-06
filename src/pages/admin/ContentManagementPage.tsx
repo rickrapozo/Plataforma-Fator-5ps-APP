@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
   FileText,
-  Music,
   Mail,
   Search,
   Plus,
@@ -12,17 +11,8 @@ import {
   Eye,
   Download,
   Upload,
-  Filter,
   Star,
-  Play,
-  Pause,
-  Clock,
-  Users,
   TrendingUp,
-  Calendar,
-  Tag,
-  Globe,
-  Image,
   Video,
   BookOpen,
   Headphones,
@@ -32,7 +22,7 @@ import {
 import { useAppStore } from '../../stores/useAppStore'
 import { useAdminAuth } from '../../hooks/useSecureAuth'
 import { dataService } from '../../services/dataService'
-import type { ContentMetrics } from '../../services/dataService'
+
 
 interface Content {
   id: string
@@ -54,7 +44,7 @@ interface Content {
 }
 
 const ContentManagementPage: React.FC = () => {
-  const { user } = useAppStore()
+  const {} = useAppStore()
   const navigate = useNavigate()
   const { isLoading: authLoading, isAuthorized, error: authError, logAction } = useAdminAuth()
   const [contents, setContents] = useState<Content[]>([])

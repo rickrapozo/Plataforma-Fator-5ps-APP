@@ -3,17 +3,17 @@ import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { 
   BarChart3, Users, Eye, TrendingUp, ArrowLeft,
-  Activity, Target, Clock, Download, Trash2, Brain, Loader2, RefreshCw, Shield
+  Activity, Target, Download, Trash2, Brain, Loader2, RefreshCw, Shield
 } from 'lucide-react'
 import { useAppStore } from '../../stores/useAppStore'
 import { useAdminAuth } from '../../hooks/useSecureAuth'
 import { analyticsService } from '../../services/analyticsService'
-import { dataService } from '../../services/dataService'
+
 import { geminiService, AnalysisResult } from '../../services/geminiService'
 
 const AnalyticsPage: React.FC = () => {
   const navigate = useNavigate()
-  const { user, isAdmin } = useAppStore()
+  const { isAdmin } = useAppStore()
   const [analyticsData, setAnalyticsData] = useState<any>(null)
   const [pageViewMetrics, setPageViewMetrics] = useState<any>({})
   const [redirectAnalytics, setRedirectAnalytics] = useState<any>({})

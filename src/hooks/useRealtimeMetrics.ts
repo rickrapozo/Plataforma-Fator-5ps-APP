@@ -216,10 +216,10 @@ export const useRealtimeMetrics = (options: UseRealtimeMetricsOptions = {}) => {
   const getPerformanceScore = useCallback(() => {
     if (!metrics.current) return 0
 
-    const cpuScore = Math.max(0, 100 - metrics.current.cpu_usage)
-    const memoryScore = Math.max(0, 100 - metrics.current.memory_usage)
-    const responseScore = Math.max(0, 100 - (metrics.current.response_time / 50))
-    const errorScore = Math.max(0, 100 - (metrics.current.errors * 10))
+    const cpuScore = Math.max(0, 100 - metrics.current.cpuUsage)
+    const memoryScore = Math.max(0, 100 - metrics.current.memoryUsage)
+    const responseScore = Math.max(0, 100 - (metrics.current.responseTime / 50))
+    const errorScore = Math.max(0, 100 - (metrics.current.errorRate * 10))
 
     return Math.round((cpuScore + memoryScore + responseScore + errorScore) / 4)
   }, [metrics.current])

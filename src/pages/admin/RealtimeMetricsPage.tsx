@@ -276,9 +276,9 @@ const RealtimeMetricsPage: React.FC = () => {
           
           <MetricCard
             title="Visualizações"
-            value={formatNumber(metrics.current?.page_views || 0)}
+            value={formatNumber(metrics.current?.totalUsers || 0)}
             icon={<Eye className="w-6 h-6 text-royal-gold" />}
-            trend={getMetricsTrend('page_views')}
+            trend={getMetricsTrend('totalUsers')}
             subtitle="Total hoje"
           />
           
@@ -303,18 +303,18 @@ const RealtimeMetricsPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <MetricCard
             title="CPU"
-            value={formatPercentage(metrics.current?.cpu_usage || 0)}
+            value={formatPercentage(metrics.current?.cpuUsage || 0)}
             icon={<Server className="w-6 h-6 text-royal-gold" />}
-            trend={getMetricsTrend('cpu_usage')}
-            color={metrics.current && metrics.current.cpu_usage > 80 ? 'text-error-red' : metrics.current && metrics.current.cpu_usage > 60 ? 'text-warning-yellow' : 'text-success-green'}
+            trend={getMetricsTrend('cpuUsage')}
+            color={metrics.current && metrics.current.cpuUsage > 80 ? 'text-error-red' : metrics.current && metrics.current.cpuUsage > 60 ? 'text-warning-yellow' : 'text-success-green'}
           />
           
           <MetricCard
             title="Memória"
-            value={formatPercentage(metrics.current?.memory_usage || 0)}
+            value={formatPercentage(metrics.current?.memoryUsage || 0)}
             icon={<Activity className="w-6 h-6 text-royal-gold" />}
-            trend={getMetricsTrend('memory_usage')}
-            color={metrics.current && metrics.current.memory_usage > 85 ? 'text-error-red' : metrics.current && metrics.current.memory_usage > 70 ? 'text-warning-yellow' : 'text-success-green'}
+            trend={getMetricsTrend('memoryUsage')}
+            color={metrics.current && metrics.current.memoryUsage > 85 ? 'text-error-red' : metrics.current && metrics.current.memoryUsage > 70 ? 'text-warning-yellow' : 'text-success-green'}
           />
           
           <MetricCard
