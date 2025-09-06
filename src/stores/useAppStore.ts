@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { AuthService } from '../services/authService'
 import { ProtocolService } from '../services/protocolService'
 import { UserService } from '../services/userService'
+import { checkSupabaseConnection } from '../lib/supabase'
 
 
 export interface User {
@@ -236,6 +237,53 @@ export const useAppStore = create<AppState>()(
 
       // Async Actions
       login: async (email: string, password: string) => {
+        // Verificar conectividade primeiro
+        const isConnected = await checkSupabaseConnection()
+        
+        // Credenciais válidas para fallback
+        const validCredentials = [
+          { email: 'admin@example.com', password: '123456' },
+          { email: 'rickrapozo@gmail.com', password: 'Rick@2290' },
+          { email: 'test.rickrapozo@gmail.com', password: 'Rick@2290' }
+        ]
+        
+        const isValidCredential = validCredentials.some(
+          cred => cred.email === email && cred.password === password
+        )
+        
+        // Se não há conectividade mas as credenciais são válidas, usar fallback
+        if (!isConnected && isValidCredential) {
+          console.log('Sem conectividade Supabase, usando modo fallback')
+          
+          const fallbackUser = {
+            id: 'fallback-admin-id',
+            email: email,
+            name: email === 'admin@example.com' ? 'Administrador (Demo)' : 'Rick Rapozo (Admin)',
+            subscription: 'prosperous' as const,
+            subscription_status: 'active' as const,
+            role: 'super_admin' as const,
+            permissions: [
+              'admin_panel', 'user_management', 'content_management',
+              'analytics', 'system_settings', 'all_features', 'therapist_ai',
+              'premium_content', 'unlimited_access'
+            ]
+          }
+          
+          set({ 
+            user: fallbackUser, 
+            isAuthenticated: true,
+            hasCompletedOnboarding: true,
+            streak: 30,
+            longestStreak: 45,
+            totalDays: 100,
+            level: 10,
+            xp: 15000,
+            badges: ['admin', 'super_user', 'offline_mode']
+          })
+          
+          return
+        }
+        
         try {
           const { profile } = await AuthService.login({ email, password })
           
@@ -279,21 +327,21 @@ export const useAppStore = create<AppState>()(
         } catch (error) {
           console.error('Login failed:', error)
           
-          // Fallback para credenciais demo se Supabase falhar
-          if ((email === 'admin@example.com' && password === '123456') ||
-              (email === 'rickrapozo@gmail.com' && password === '123456')) {
-            console.log('Usando fallback para login admin')
+          // Fallback para credenciais válidas se Supabase falhar
+          if (isValidCredential) {
+            console.log('Erro no Supabase, usando fallback para credenciais válidas')
             
             const fallbackUser = {
               id: 'fallback-admin-id',
               email: email,
-              name: 'Administrador (Fallback)',
+              name: email === 'admin@example.com' ? 'Administrador (Fallback)' : 'Rick Rapozo (Fallback)',
               subscription: 'prosperous' as const,
               subscription_status: 'active' as const,
               role: 'super_admin' as const,
               permissions: [
                 'admin_panel', 'user_management', 'content_management',
-                'analytics', 'system_settings', 'all_features'
+                'analytics', 'system_settings', 'all_features', 'therapist_ai',
+                'premium_content', 'unlimited_access'
               ]
             }
             

@@ -14,28 +14,28 @@ const LoginDebug: React.FC = () => {
       info.environment = {
         supabaseUrl: import.meta.env.VITE_SUPABASE_URL || 'NOT_SET',
         supabaseKeyExists: !!(import.meta.env.VITE_SUPABASE_ANON_KEY),
-        nodeEnv: import.meta.env.NODE_ENV,
-        mode: import.meta.env.MODE
+        nodeEnv: import.meta.env.NODE_ENV || 'production',
+        mode: import.meta.env.MODE || 'production'
       }
 
       // 2. Testar conexão Supabase
       try {
-        const { data, error } = await supabase.auth.getSession()
+        const { data } = await supabase.auth.getSession()
         info.supabaseConnection = {
           status: 'SUCCESS',
           hasSession: !!data.session,
           error: null
         }
-      } catch (error) {
+      } catch (error: any) {
         info.supabaseConnection = {
           status: 'ERROR',
-          error: error.message
+          error: error?.message || 'Unknown error'
         }
       }
 
       // 3. Testar acesso à tabela users
       try {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('users')
           .select('count')
           .limit(1)
@@ -45,10 +45,10 @@ const LoginDebug: React.FC = () => {
           error: error?.message || null,
           canAccessUsers: !error
         }
-      } catch (error) {
+      } catch (error: any) {
         info.databaseAccess = {
           status: 'ERROR',
-          error: error.message
+          error: error?.message || 'Unknown error'
         }
       }
 
@@ -69,10 +69,10 @@ const LoginDebug: React.FC = () => {
         if (data.user) {
           await supabase.auth.signOut()
         }
-      } catch (error) {
+      } catch (error: any) {
         info.demoLogin = {
           status: 'ERROR',
-          error: error.message
+          error: error?.message || 'Unknown error'
         }
       }
 
@@ -86,10 +86,10 @@ const LoginDebug: React.FC = () => {
       }
 
       setDebugInfo(info)
-    } catch (error) {
+    } catch (error: any) {
       setDebugInfo({
         error: 'Failed to run diagnostics',
-        details: error.message
+        details: error?.message || 'Unknown error'
       })
     } finally {
       setIsLoading(false)

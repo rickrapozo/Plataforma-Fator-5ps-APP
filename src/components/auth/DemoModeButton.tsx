@@ -1,70 +1,54 @@
 import { useAppStore } from '../../stores/useAppStore'
 import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 
 const DemoModeButton = () => {
-  const { setUser, setAuthenticated, completeOnboarding } = useAppStore()
+  const { login } = useAppStore()
   const navigate = useNavigate()
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const enterAdminMode = () => {
-    // Criar usuário administrador fictício
-    const adminUser = {
-      id: 'admin-user-id',
-      email: 'rickrapozo@gmail.com',
-      name: 'Rick Rapozo (Admin)',
-      subscription: 'prosperous' as const,
-      subscription_status: 'active' as const,
-      role: 'super_admin' as const,
-      permissions: [
-        'admin_panel',
-        'user_management', 
-        'content_management',
-        'analytics',
-        'system_settings',
-        'all_features',
-        'therapist_ai',
-        'premium_content',
-        'unlimited_access'
-      ]
+  const enterAdminMode = async () => {
+    setIsLoading(true)
+    setError('')
+    
+    try {
+      // Usar as credenciais demo válidas
+      await login('admin@example.com', '123456')
+      
+      // Navegar para dashboard após login bem-sucedido
+      navigate('/app/dashboard')
+    } catch (err) {
+      console.error('Erro no login demo:', err)
+      setError('Erro ao fazer login. Tente novamente.')
+    } finally {
+      setIsLoading(false)
     }
-
-    // Configurar estado como autenticado com dados admin
-    setUser(adminUser)
-    setAuthenticated(true)
-    
-    // Completar onboarding com resultados fictícios
-    completeOnboarding({
-      thought: 5,
-      feeling: 5,
-      emotion: 5,
-      action: 5,
-      result: 5,
-      completedAt: new Date().toISOString()
-    })
-    
-    // Configurar dados admin avançados usando o store
-    useAppStore.setState({
-      streak: 30,
-      longestStreak: 45,
-      totalDays: 100,
-      level: 10,
-      xp: 15000,
-      badges: [
-        'admin', 'super_user', 'streak-7', 'streak-21', 'streak-30',
-        'level-5', 'level-10', 'master', 'guru', 'transformer'
-      ]
-    })
-    
-    // Navegar para dashboard
-    navigate('/app/dashboard')
   }
 
   return (
-    <button
-      onClick={enterAdminMode}
-      className="w-full mt-4 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 shadow-lg border border-purple-400/30"
-    >
-      👑 Entrar como Administrador
-    </button>
+    <div className="w-full mt-4">
+      <button
+        onClick={enterAdminMode}
+        disabled={isLoading}
+        className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 shadow-lg border border-purple-400/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+      >
+        {isLoading ? (
+          <>
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <span>Entrando...</span>
+          </>
+        ) : (
+          <>
+            <span>👑</span>
+            <span>Entrar como Administrador</span>
+          </>
+        )}
+      </button>
+      {error && (
+        <p className="text-red-400 text-sm mt-2 text-center">{error}</p>
+      )}
+    </div>
   )
 }
 
