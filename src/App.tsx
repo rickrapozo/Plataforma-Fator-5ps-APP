@@ -126,14 +126,47 @@ function App() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="subscription" element={<SubscriptionPage />} />
           <Route path="privacy-settings" element={<PrivacySettingsPage />} />
-          <Route path="admin" element={<AdminPanelPage />} />
-          <Route path="admin/analytics" element={<LazyAnalyticsPage />} />
-          <Route path="admin/webhook-test" element={<LazyWebhookTestPage />} />
-          <Route path="admin/realtime-metrics" element={<LazyRealtimeMetricsPage />} />
-          <Route path="admin/users" element={<LazyUserManagementPage />} />
-          <Route path="admin/content" element={<LazyContentManagementPage />} />
-          <Route path="admin/settings" element={<LazySystemSettingsPage />} />
-          <Route path="admin/performance" element={<LazyPerformanceAnalysisPage />} />
+          {/* Admin Routes - Protected with Admin Access */}
+          <Route path="admin" element={
+            <ProtectedRoute requireAdmin>
+              <AdminPanelPage />
+            </ProtectedRoute>
+          } />
+          <Route path="admin/analytics" element={
+            <ProtectedRoute requireAdmin>
+              <LazyAnalyticsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="admin/webhook-test" element={
+            <ProtectedRoute requireAdmin>
+              <LazyWebhookTestPage />
+            </ProtectedRoute>
+          } />
+          <Route path="admin/realtime-metrics" element={
+            <ProtectedRoute requireAdmin>
+              <LazyRealtimeMetricsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="admin/users" element={
+            <ProtectedRoute requireAdmin>
+              <LazyUserManagementPage />
+            </ProtectedRoute>
+          } />
+          <Route path="admin/content" element={
+            <ProtectedRoute requireAdmin>
+              <LazyContentManagementPage />
+            </ProtectedRoute>
+          } />
+          <Route path="admin/settings" element={
+            <ProtectedRoute requireAdmin>
+              <LazySystemSettingsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="admin/performance" element={
+            <ProtectedRoute requireAdmin>
+              <LazyPerformanceAnalysisPage />
+            </ProtectedRoute>
+          } />
         </Route>
         
         {/* Redirect logic */}

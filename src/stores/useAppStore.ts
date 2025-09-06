@@ -256,7 +256,7 @@ export const useAppStore = create<AppState>()(
           console.log('Sem conectividade Supabase, usando modo fallback')
           
           const fallbackUser = {
-            id: 'fallback-admin-id',
+            id: '00000000-0000-0000-0000-000000000001',
             email: email,
             name: email === 'admin@example.com' ? 'Administrador (Demo)' : 'Rick Rapozo (Admin)',
             subscription: 'prosperous' as const,
@@ -332,7 +332,7 @@ export const useAppStore = create<AppState>()(
             console.log('Erro no Supabase, usando fallback para credenciais válidas')
             
             const fallbackUser = {
-              id: 'fallback-admin-id',
+              id: '00000000-0000-0000-0000-000000000001',
               email: email,
               name: email === 'admin@example.com' ? 'Administrador (Fallback)' : 'Rick Rapozo (Fallback)',
               subscription: 'prosperous' as const,

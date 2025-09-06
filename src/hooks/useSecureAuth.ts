@@ -142,12 +142,18 @@ export const useSecureAuth = (options: UseSecureAuthOptions = {}): UseSecureAuth
       setIsLoading(true)
 
       try {
-        // Validar sessão se habilitado
+        // Validar sessão se habilitado (pular para usuários fallback)
         if (options.autoValidateSession && user?.id) {
-          const sessionValid = await validateSession()
-          if (!sessionValid) {
-            setIsLoading(false)
-            return
+          const isFallbackUser = user.id === '00000000-0000-0000-0000-000000000001'
+          if (!isFallbackUser) {
+            const sessionValid = await validateSession()
+            if (!sessionValid) {
+              setIsLoading(false)
+              return
+            }
+          } else {
+            console.log('Usuário em modo fallback, pulando validação inicial de sessão')
+            setIsSessionValid(true)
           }
         }
 
@@ -164,6 +170,13 @@ export const useSecureAuth = (options: UseSecureAuthOptions = {}): UseSecureAuth
   // Validação periódica de sessão (apenas se autenticado e não em loading)
   useEffect(() => {
     if (!options.autoValidateSession || !user?.id || !isAuthenticated) return
+    
+    // Pular validação periódica para usuários em modo fallback
+    const isFallbackUser = user.id === '00000000-0000-0000-0000-000000000001'
+    if (isFallbackUser) {
+      console.log('Usuário em modo fallback, pulando validação periódica de sessão')
+      return
+    }
 
     const interval = setInterval(async () => {
       // Só validar se não estiver carregando para evitar múltiplas validações

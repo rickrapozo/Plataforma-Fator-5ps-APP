@@ -104,6 +104,16 @@ class SecurityService {
   // Validar sessão do usuário
   async validateSession(userId: string): Promise<{ isValid: boolean; user?: User }> {
     try {
+      // Verificar se é um usuário em modo fallback/offline
+      const isFallbackUser = userId === '00000000-0000-0000-0000-000000000001'
+      
+      if (isFallbackUser) {
+        console.log('Usuário em modo fallback detectado, pulando validação Supabase')
+        // Para usuários fallback, sempre considerar sessão válida
+        // O usuário já foi validado no login
+        return { isValid: true }
+      }
+      
       const { data: { session }, error } = await supabase.auth.getSession()
       
       if (error) {
