@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import { useAppStore } from '../../stores/useAppStore'
 import Logo from '../../components/shared/Logo'
 import DemoModeButton from '../../components/auth/DemoModeButton'
+import LoginDebug from '../../components/debug/LoginDebug'
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate()
@@ -64,12 +65,14 @@ const LoginPage: React.FC = () => {
     } catch (error: any) {
       console.error('Login error:', error)
       
-      let errorMessage = 'div'
+      let errorMessage = 'Erro ao fazer login. Tente novamente.'
       
       if (error.message?.includes('Invalid login credentials')) {
-        errorMessage = 'div'
+        errorMessage = 'Email ou senha incorretos. Verifique suas credenciais.'
       } else if (error.message?.includes('Email not confirmed')) {
-        errorMessage = 'div'
+        errorMessage = 'Email não confirmado. Verifique sua caixa de entrada.'
+      } else if (error.message?.includes('Too many requests')) {
+        errorMessage = 'Muitas tentativas de login. Tente novamente em alguns minutos.'
       }
       
       toast.error(errorMessage)
@@ -248,6 +251,9 @@ const LoginPage: React.FC = () => {
           </p>
         </motion.div>
       </motion.div>
+
+      {/* Debug Component - Only in development */}
+      {import.meta.env.DEV && <LoginDebug />}
     </div>
   )
 }
