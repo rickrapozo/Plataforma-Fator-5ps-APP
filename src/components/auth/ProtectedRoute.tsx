@@ -24,7 +24,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { 
     isLoading, 
     isAuthorized, 
-    error, 
     logAction,
     isSessionValid 
   } = useSecureAuth({

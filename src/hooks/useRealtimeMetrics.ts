@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { monitoringService, SystemMetrics, UserActivity, ErrorLog } from '../services/monitoringService'
+import { monitoringService, UserActivity, ErrorLog } from '../services/monitoringService'
+import { SystemMetrics } from '../services/dataService'
 import { geminiService, AnalysisResult } from '../services/geminiService'
 import { metricsCache, CacheKeys, withCache } from '../utils/cacheManager'
 
@@ -61,21 +62,9 @@ export const useRealtimeMetrics = (options: UseRealtimeMetricsOptions = {}) => {
         120000 // 2 minutes
       )
 
-      // Use cache for activities with 1-minute TTL
-      const activities = await withCache.apiCall(
-        metricsCache,
-        CacheKeys.USER_ACTIVITIES,
-        () => monitoringService.getRecentActivities(100),
-        60000 // 1 minute
-      )
-
-      // Use cache for errors with 1-minute TTL
-      const errors = await withCache.apiCall(
-        metricsCache,
-        CacheKeys.ERROR_LOGS,
-        () => monitoringService.getRecentErrors(50),
-        60000 // 1 minute
-      )
+      // Get recent activities and errors
+      const activities = monitoringService.getRecentActivities(100)
+      const errors = monitoringService.getRecentErrors(50)
 
       // Use cache for system health with 30-second TTL
       const health = await withCache.apiCall(
@@ -117,7 +106,7 @@ export const useRealtimeMetrics = (options: UseRealtimeMetricsOptions = {}) => {
       const analysis = await withCache.apiCall(
         metricsCache,
         CacheKeys.GEMINI_INSIGHTS('performance'),
-        () => geminiService.analyzeSystemPerformance(analysisData),
+        () => geminiService.analyzeSystemPerformance([analysisData]),
         300000 // 5 minutes
       )
       

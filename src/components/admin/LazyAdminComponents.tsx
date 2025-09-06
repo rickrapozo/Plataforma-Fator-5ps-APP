@@ -24,7 +24,7 @@ const AdminPageLoader: React.FC = () => (
         transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
         className="inline-block mb-4"
       >
-        <Loader className="w-12 h-12 text-royal-gold" />
+        <Loader2 className="w-12 h-12 text-royal-gold" />
       </motion.div>
       <h3 className="text-xl font-semibold text-white mb-2">Carregando Painel</h3>
       <p className="text-pearl-white/60">Preparando interface administrativa...</p>

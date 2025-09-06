@@ -35,8 +35,6 @@ import LibraryPage from './pages/library/LibraryPage'
 import ProfilePage from './pages/profile/ProfilePage'
 import SubscriptionPage from './pages/subscription/SubscriptionPage'
 import AdminPanelPage from './pages/admin/AdminPanelPage'
-import AnalyticsPage from './pages/admin/AnalyticsPage'
-import WebhookTestPage from './pages/admin/WebhookTestPage'
 import PrivacySettingsPage from './pages/settings/PrivacySettingsPage'
 import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage'
 // Lazy loaded admin components for better performance

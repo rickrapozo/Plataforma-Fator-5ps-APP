@@ -407,7 +407,7 @@ class DataService {
     return (completedProtocols / protocols.length) * 100
   }
 
-  private async testGeminiConnection(): Promise<boolean> {
+  async testGeminiConnection(): Promise<boolean> {
     try {
       await this.geminiService.testConnection()
       return true

@@ -151,7 +151,7 @@ class MonitoringService {
     this.activities.push(activity)
   }
 
-  trackApiCall(endpoint: string, method: string, responseTime: number, status: number) {
+  trackApiCall(endpoint: string, method: string, status: number) {
     this.apiCalls++
     
     if (status >= 400) {
@@ -193,36 +193,9 @@ class MonitoringService {
     this.localMetrics = enhancedMetrics
   }
 
-  private getCpuUsage(): number {
-    // Simulação de uso de CPU baseado na atividade
-    const baseUsage = 10 + Math.random() * 20
-    const activityMultiplier = Math.min(this.activities.length / 100, 2)
-    return Math.min(baseUsage + (activityMultiplier * 30), 100)
-  }
 
-  private getMemoryUsage(): number {
-    if (typeof performance !== 'undefined' && (performance as any).memory) {
-      const memory = (performance as any).memory
-      return (memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100
-    }
-    return 30 + Math.random() * 40 // Fallback
-  }
 
-  private getActiveUsersCount(): number {
-    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000
-    const recentActivities = this.activities.filter(
-      activity => new Date(activity.timestamp).getTime() > fiveMinutesAgo
-    )
-    const uniqueUsers = new Set(recentActivities.map(a => a.user_id))
-    return uniqueUsers.size
-  }
 
-  private getAverageResponseTime(): number {
-    // Simulação baseada na atividade recente
-    const baseTime = 200 + Math.random() * 300
-    const loadMultiplier = Math.min(this.apiCalls / 50, 3)
-    return baseTime + (loadMultiplier * 100)
-  }
 
   private async saveToDatabase() {
     try {
@@ -380,7 +353,7 @@ class MonitoringService {
               status = error ? 'offline' : 'online'
             } else if (service.name === 'Gemini AI') {
               // Testar conexão com Gemini
-              const isOnline = await this.testGeminiConnection()
+              const isOnline = await dataService.testGeminiConnection()
               responseTime = Date.now() - startTime
               status = isOnline ? 'online' : 'offline'
             } else {

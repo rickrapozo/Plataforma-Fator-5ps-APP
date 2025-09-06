@@ -71,7 +71,7 @@ export const useAnalytics = () => {
     )
   }
 
-  const trackRedirect = (destination: string, reason: string, metadata?: Record<string, any>) => {
+  const trackRedirect = (destination: string, reason: string) => {
     analyticsService.trackRedirect(
       location.pathname,
       destination,

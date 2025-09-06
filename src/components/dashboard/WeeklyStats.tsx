@@ -7,7 +7,6 @@ const WeeklyStats: React.FC = () => {
   const { streak, xp } = useAppStore()
   
   // Generate mock weekly data (in a real app, this would come from the store)
-  const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
   const today = new Date().getDay()
   
   // Mock completion data for the week (you can replace this with real data)

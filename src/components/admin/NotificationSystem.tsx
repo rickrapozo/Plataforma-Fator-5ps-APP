@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, X, AlertTriangle, CheckCircle, Info, AlertCircle, Settings } from 'lucide-react'
+import { Bell, X, AlertTriangle, CheckCircle, Info, AlertCircle } from 'lucide-react'
 import { useAppStore } from '../../stores/useAppStore'
 
 export interface AdminNotification {
@@ -199,16 +199,16 @@ const NotificationSystem: React.FC<NotificationSystemProps> = ({ className = '' 
   const unreadCount = notifications.filter(n => !n.read).length
 
   useEffect(() => {
-    if (user?.isAdmin) {
+    if (user?.role === 'admin' || user?.role === 'super_admin') {
       loadNotifications()
       
       // Set up real-time updates (in a real app, this would be WebSocket or SSE)
       const interval = setInterval(loadNotifications, 30000) // Update every 30 seconds
       return () => clearInterval(interval)
     }
-  }, [user?.isAdmin, loadNotifications])
+  }, [user?.role, loadNotifications])
 
-  if (!user?.isAdmin) return null
+  if (user?.role !== 'admin' && user?.role !== 'super_admin') return null
 
   return (
     <div className={`relative ${className}`}>
