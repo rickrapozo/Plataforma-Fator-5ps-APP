@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
   FileText,
+  Music,
   Mail,
   Search,
   Plus,
@@ -11,19 +12,27 @@ import {
   Eye,
   Download,
   Upload,
+  Filter,
   Star,
+  Play,
+  Pause,
+  Clock,
+  Users,
   TrendingUp,
+  Calendar,
+  Tag,
+  Globe,
+  Image,
   Video,
   BookOpen,
   Headphones,
   RefreshCw,
-  Shield,
-  Clock
+  Shield
 } from 'lucide-react'
 import { useAppStore } from '../../stores/useAppStore'
 import { useAdminAuth } from '../../hooks/useSecureAuth'
 import { dataService } from '../../services/dataService'
-
+import type { ContentMetrics } from '../../services/dataService'
 
 interface Content {
   id: string
@@ -45,7 +54,7 @@ interface Content {
 }
 
 const ContentManagementPage: React.FC = () => {
-  const {} = useAppStore()
+  const { user } = useAppStore()
   const navigate = useNavigate()
   const { isLoading: authLoading, isAuthorized, error: authError, logAction } = useAdminAuth()
   const [contents, setContents] = useState<Content[]>([])
@@ -67,7 +76,7 @@ const ContentManagementPage: React.FC = () => {
       try {
         await logAction('access_content_management', { page: 'ContentManagementPage' })
         const contentData = await dataService.getContentMetrics()
-        setContents(contentData as Content[])
+        setContents(contentData)
       } catch (error) {
         console.error('Erro ao carregar conteúdos:', error)
         // Fallback to mock data if needed
@@ -234,7 +243,15 @@ const ContentManagementPage: React.FC = () => {
     }
   }
 
-
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'published': return 'text-success-green'
+      case 'draft': return 'text-warning-yellow'
+      case 'archived': return 'text-pearl-white/60'
+      case 'scheduled': return 'text-bright-gold'
+      default: return 'text-pearl-white/60'
+    }
+  }
 
   const getStatusBadge = (status: string) => {
     const colors = {
@@ -270,7 +287,13 @@ const ContentManagementPage: React.FC = () => {
     )
   }
 
-
+  const handleSelectAll = () => {
+    if (selectedContents.length === currentContents.length) {
+      setSelectedContents([])
+    } else {
+      setSelectedContents(currentContents.map(content => content.id))
+    }
+  }
 
   const handleBulkAction = (action: string) => {
     console.log(`Ação em lote: ${action} para conteúdos:`, selectedContents)

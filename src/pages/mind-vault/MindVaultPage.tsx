@@ -1,55 +1,84 @@
-import React, { useState } from 'react'
-import { motion } from 'framer-motion'
-import { Search, Play, Crown, Star } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Search, Play, Crown, Star, Loader, RefreshCw, Music, Headphones } from 'lucide-react'
+import AudioPlayer from '../../components/audio/AudioPlayer'
+import AudioCard from '../../components/audio/AudioCard'
+import { AudioTrack } from '../../services/audioIntegrationService';
+import { audioLibrary, categories, getAudiosByCategory, searchAudios } from '../../data/audioLibrary';
 
 const MindVaultPage: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [currentCategory, setCurrentCategory] = useState('Todos')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('Todos')
+  const [filteredAudios, setFilteredAudios] = useState<AudioTrack[]>(audioLibrary)
+  const [isLoading, setIsLoading] = useState(false)
+  const [currentTrack, setCurrentTrack] = useState<AudioTrack | null>(null)
+  const [playlist, setPlaylist] = useState<AudioTrack[]>([])
+  const [showPlayer, setShowPlayer] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const categories = ['Todos', 'Prosperidade', 'Foco', 'Confiança', 'Sono', 'Relacionamentos']
-  
-  const audioLibrary = [
-    {
-      id: 'prosperity-meditation',
-      title: 'Meditação da Prosperidade',
-      description: 'Reprogramação profunda para abundância financeira',
-      duration: '15:30',
-      category: 'Prosperidade',
-      thumbnail: '💰',
-      isPremium: false,
-      plays: 1250,
-      rating: 4.9
-    },
-    {
-      id: 'focus-enhancement',
-      title: 'Potencializador de Foco',
-      description: 'Elimine distrações e maximize sua concentração',
-      duration: '12:45',
-      category: 'Foco',
-      thumbnail: '🎯',
-      isPremium: true,
-      plays: 980,
-      rating: 4.8
-    },
-    {
-      id: 'sleep-reprogramming',
-      title: 'Reprogramação no Sono',
-      description: 'Transforme sua mente enquanto dorme',
-      duration: '45:00',
-      category: 'Sono',
-      thumbnail: '🌙',
-      isPremium: true,
-      plays: 2100,
-      rating: 4.95
+  // Carregar áudios automaticamente por categoria
+  useEffect(() => {
+    loadAudiosByCategory(selectedCategory)
+  }, [selectedCategory])
+
+  // Aplicar filtro de busca quando searchTerm muda
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      const searchResults = searchAudios(searchTerm)
+      setFilteredAudios(searchResults)
+    } else {
+      loadAudiosByCategory(selectedCategory)
     }
-  ]
+  }, [searchTerm])
 
-  const filteredAudios = audioLibrary.filter(audio => {
-    const matchesCategory = currentCategory === 'Todos' || audio.category === currentCategory
-    const matchesSearch = audio.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         audio.description.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
+  const loadAudiosByCategory = (category: string) => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      const audios = getAudiosByCategory(category)
+      setFilteredAudios(audios)
+    } catch (err) {
+      console.error('Erro ao carregar áudios:', err)
+      setError('Erro ao carregar áudios da biblioteca.')
+      setFilteredAudios([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSearch = () => {
+    if (!searchTerm.trim()) {
+      loadAudiosByCategory(selectedCategory)
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      const searchResults = searchAudios(searchTerm)
+      setFilteredAudios(searchResults)
+    } catch (err) {
+      console.error('Erro na busca:', err)
+      setError('Erro na busca.')
+      setFilteredAudios([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handlePlayAudio = (audio: AudioTrack) => {
+    setCurrentTrack(audio)
+    setPlaylist(filteredAudios)
+    setShowPlayer(true)
+  }
+
+  const handleTrackChange = (track: AudioTrack) => {
+    setCurrentTrack(track)
+  }
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-deep-forest to-forest-green p-4 pb-24">
@@ -76,11 +105,25 @@ const MindVaultPage: React.FC = () => {
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-pearl-white/60" />
         <input
           type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-full text-white placeholder-pearl-white/60 focus:outline-none focus:ring-2 focus:ring-royal-gold focus:border-royal-gold transition-all"
-          placeholder="Buscar áudios..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-full text-white placeholder-pearl-white/60 focus:outline-none focus:ring-2 focus:ring-royal-gold focus:border-royal-gold transition-all"
+          placeholder="Buscar áudios na biblioteca..."
         />
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleSearch}
+          disabled={isLoading}
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-pearl-white/60 hover:text-royal-gold transition-colors disabled:opacity-50"
+        >
+          {isLoading ? (
+            <Loader className="w-4 h-4 animate-spin" />
+          ) : (
+            <RefreshCw className="w-4 h-4" />
+          )}
+        </motion.button>
       </motion.div>
 
       {/* Category Filters */}
@@ -91,78 +134,168 @@ const MindVaultPage: React.FC = () => {
         className="flex space-x-2 overflow-x-auto pb-2 mb-6"
       >
         {categories.map((category) => (
-          <button
+          <motion.button
             key={category}
-            onClick={() => setCurrentCategory(category)}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-              currentCategory === category
-                ? 'bg-royal-gold text-white'
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setSelectedCategory(category)}
+            disabled={isLoading}
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all disabled:opacity-50 ${
+              selectedCategory === category
+                ? 'bg-royal-gold text-white shadow-lg'
                 : 'bg-white/10 text-pearl-white/80 hover:bg-white/20'
             }`}
           >
             {category}
-          </button>
+            {isLoading && selectedCategory === category && (
+              <Loader className="w-3 h-3 ml-2 animate-spin inline" />
+            )}
+          </motion.button>
         ))}
       </motion.div>
 
-      {/* Audio Grid */}
-      <div className="space-y-4">
-        {filteredAudios.map((audio, index) => (
-          <motion.div
-            key={audio.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 + index * 0.1 }}
-            className="glass-card p-4 flex items-center space-x-4"
-          >
-            {/* Thumbnail */}
-            <div className="w-16 h-16 bg-gradient-to-br from-royal-gold to-bright-gold rounded-lg flex items-center justify-center text-2xl relative">
-              {audio.thumbnail}
-              {audio.isPremium && (
-                <Crown className="absolute -top-1 -right-1 w-4 h-4 text-royal-gold bg-white rounded-full p-0.5" />
-              )}
+      {/* Stats Bar */}
+      {filteredAudios.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="glass-card p-4 mb-6 flex items-center justify-between"
+        >
+          <div className="flex items-center space-x-4 text-pearl-white/80">
+            <div className="flex items-center space-x-2">
+              <Music className="w-4 h-4" />
+              <span className="text-sm">{filteredAudios.length} áudios encontrados</span>
             </div>
-
-            {/* Content */}
-            <div className="flex-1">
-              <h3 className="text-white font-semibold text-lg mb-1">
-                {audio.title}
-              </h3>
-              <p className="text-pearl-white/70 text-sm mb-2">
-                {audio.description}
-              </p>
-              <div className="flex items-center space-x-4 text-xs text-pearl-white/60">
-                <span>{audio.duration}</span>
-                <span>{audio.category}</span>
-                <div className="flex items-center space-x-1">
-                  <Star className="w-3 h-3 fill-current text-royal-gold" />
-                  <span>{audio.rating}</span>
-                </div>
-                <span>{audio.plays.toLocaleString()} plays</span>
-              </div>
+            <div className="flex items-center space-x-2">
+              <Headphones className="w-4 h-4" />
+              <span className="text-sm">
+                Biblioteca Local
+              </span>
             </div>
-
-            {/* Play Button */}
+          </div>
+          {currentTrack && (
             <motion.button
-              className="w-12 h-12 bg-royal-gold rounded-full flex items-center justify-center"
-              whileTap={{ scale: 0.9 }}
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowPlayer(!showPlayer)}
+              className="px-3 py-1 bg-royal-gold/20 text-royal-gold rounded-full text-sm font-medium hover:bg-royal-gold/30 transition-colors"
             >
-              <Play className="w-6 h-6 text-white ml-0.5" />
+              {showPlayer ? 'Ocultar Player' : 'Mostrar Player'}
             </motion.button>
-          </motion.div>
-        ))}
-      </div>
+          )}
+        </motion.div>
+      )}
 
-      {filteredAudios.length === 0 && (
+      {/* Error Message */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card p-4 mb-6 bg-red-500/10 border border-red-500/20"
+        >
+          <p className="text-red-300 text-center">{error}</p>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => loadAudiosByCategory(currentCategory)}
+            className="mt-2 mx-auto block px-4 py-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-colors"
+          >
+            Tentar Novamente
+          </motion.button>
+        </motion.div>
+      )}
+
+      {/* Audio Player */}
+      <AnimatePresence>
+        {showPlayer && currentTrack && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="mb-6"
+          >
+            <AudioPlayer
+              currentTrack={currentTrack}
+              playlist={playlist}
+              onTrackChange={handleTrackChange}
+              autoPlay={true}
+              showPlaylist={true}
+              theme="dark"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Loading State */}
+      {isLoading && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="text-center py-12"
         >
+          <Loader className="w-8 h-8 animate-spin mx-auto mb-4 text-royal-gold" />
           <p className="text-pearl-white/60 text-lg">
-            Nenhum áudio encontrado para "{searchQuery}" na categoria "{currentCategory}"
+            Carregando áudios da biblioteca...
           </p>
+        </motion.div>
+      )}
+
+      {/* Audio Grid */}
+      {!isLoading && (
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <AnimatePresence>
+            {filteredAudios.map((audio, index) => (
+              <motion.div
+                key={audio.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <AudioCard
+                  audio={audio}
+                  onPlay={handlePlayAudio}
+                  isPlaying={currentTrack?.id === audio.id}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
+      )}
+
+      {!isLoading && filteredAudios.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-12"
+        >
+          <Music className="w-16 h-16 mx-auto mb-4 text-pearl-white/30" />
+          <p className="text-pearl-white/60 text-lg mb-2">
+            {searchTerm.trim() 
+              ? `Nenhum áudio encontrado para "${searchTerm}"` 
+              : `Nenhum áudio encontrado na categoria "${selectedCategory}"`
+            }
+          </p>
+          <p className="text-pearl-white/40 text-sm mb-4">
+            Tente buscar por outros termos ou selecione uma categoria diferente
+          </p>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              setSearchTerm('')
+              setSelectedCategory('Todos')
+            }}
+            className="px-6 py-2 bg-royal-gold/20 text-royal-gold rounded-full hover:bg-royal-gold/30 transition-colors"
+          >
+            Ver Todos os Áudios
+          </motion.button>
         </motion.div>
       )}
     </div>

@@ -32,11 +32,15 @@ import JourneyDayPage from './pages/journeys/JourneyDayPage'
 import MindVaultPage from './pages/mind-vault/MindVaultPage'
 import AudioPlayerPage from './pages/mind-vault/AudioPlayerPage'
 import LibraryPage from './pages/library/LibraryPage'
+import CommunityPage from './pages/community/CommunityPage'
 import ProfilePage from './pages/profile/ProfilePage'
 import SubscriptionPage from './pages/subscription/SubscriptionPage'
+import SubscriptionSuccessPage from './pages/subscription/SubscriptionSuccessPage'
+import SubscriptionCancelPage from './pages/subscription/SubscriptionCancelPage'
 import AdminPanelPage from './pages/admin/AdminPanelPage'
 import PrivacySettingsPage from './pages/settings/PrivacySettingsPage'
 import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage'
+import TestPage from './pages/TestPage'
 // Lazy loaded admin components for better performance
 import {
   LazyRealtimeMetricsPage,
@@ -105,6 +109,14 @@ function App() {
         
         {/* Public Subscription Page */}
         <Route path="/subscription" element={<SubscriptionPage />} />
+        <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
+        <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
+        
+        {/* Test Page */}
+        <Route path="/test" element={<TestPage />} />
+        
+        {/* Dashboard Test - Without Protection */}
+        <Route path="/dashboard-test" element={<DashboardPage />} />
         
         {/* Legal Pages */}
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
@@ -123,50 +135,18 @@ function App() {
           <Route path="mind-vault" element={<MindVaultPage />} />
           <Route path="mind-vault/player/:audioId" element={<AudioPlayerPage />} />
           <Route path="library" element={<LibraryPage />} />
+          <Route path="community" element={<CommunityPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="subscription" element={<SubscriptionPage />} />
           <Route path="privacy-settings" element={<PrivacySettingsPage />} />
-          {/* Admin Routes - Protected with Admin Access */}
-          <Route path="admin" element={
-            <ProtectedRoute requireAdmin>
-              <AdminPanelPage />
-            </ProtectedRoute>
-          } />
-          <Route path="admin/analytics" element={
-            <ProtectedRoute requireAdmin>
-              <LazyAnalyticsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="admin/webhook-test" element={
-            <ProtectedRoute requireAdmin>
-              <LazyWebhookTestPage />
-            </ProtectedRoute>
-          } />
-          <Route path="admin/realtime-metrics" element={
-            <ProtectedRoute requireAdmin>
-              <LazyRealtimeMetricsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="admin/users" element={
-            <ProtectedRoute requireAdmin>
-              <LazyUserManagementPage />
-            </ProtectedRoute>
-          } />
-          <Route path="admin/content" element={
-            <ProtectedRoute requireAdmin>
-              <LazyContentManagementPage />
-            </ProtectedRoute>
-          } />
-          <Route path="admin/settings" element={
-            <ProtectedRoute requireAdmin>
-              <LazySystemSettingsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="admin/performance" element={
-            <ProtectedRoute requireAdmin>
-              <LazyPerformanceAnalysisPage />
-            </ProtectedRoute>
-          } />
+          <Route path="admin" element={<AdminPanelPage />} />
+          <Route path="admin/analytics" element={<LazyAnalyticsPage />} />
+          <Route path="admin/webhook-test" element={<LazyWebhookTestPage />} />
+          <Route path="admin/realtime-metrics" element={<LazyRealtimeMetricsPage />} />
+          <Route path="admin/users" element={<LazyUserManagementPage />} />
+          <Route path="admin/content" element={<LazyContentManagementPage />} />
+          <Route path="admin/settings" element={<LazySystemSettingsPage />} />
+          <Route path="admin/performance" element={<LazyPerformanceAnalysisPage />} />
         </Route>
         
         {/* Redirect logic */}

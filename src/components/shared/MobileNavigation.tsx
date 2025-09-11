@@ -7,6 +7,7 @@ import {
   Map, 
   Headphones, 
   BookOpen,
+  Users,
   Crown
 } from 'lucide-react'
 import { useAppStore } from '../../stores/useAppStore'
@@ -23,6 +24,7 @@ const navItems: NavItem[] = [
   { icon: Brain, label: 'Terapeuta AI', route: '/app/therapist-ai', premium: true },
   { icon: Map, label: 'Jornadas', route: '/app/journeys' },
   { icon: Headphones, label: 'Cofre Mental', route: '/app/mind-vault' },
+  { icon: Users, label: 'Comunidade', route: '/app/community' },
   { icon: BookOpen, label: 'Biblioteca', route: '/app/library' }
 ]
 

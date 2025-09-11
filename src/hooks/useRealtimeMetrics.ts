@@ -96,7 +96,8 @@ export const useRealtimeMetrics = (options: UseRealtimeMetricsOptions = {}) => {
     setAnalysisLoading(true)
     try {
       const analysisData = {
-        metrics: metrics.historical.slice(-10), // Últimas 10 métricas
+        current: metrics.current,
+        historical: metrics.historical.slice(-10), // Últimas 10 métricas
         activities: metrics.activities.slice(-50), // Últimas 50 atividades
         errors: metrics.errors.slice(-20), // Últimos 20 erros
         health: metrics.health

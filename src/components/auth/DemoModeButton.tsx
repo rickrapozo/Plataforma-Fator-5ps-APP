@@ -13,40 +13,32 @@ const DemoModeButton = () => {
     setError('')
     
     try {
-      // Usar as credenciais demo válidas
-      await login('admin@example.com', '123456')
+      console.log('🚀 Entrando em modo desenvolvedor')
       
-      // Navegar para dashboard após login bem-sucedido
+      // Fazer login com usuário admin existente
+      await login('rickrapozo@gmail.com', 'Rick@2290')
+      
+      console.log('✅ Login demo realizado com sucesso')
       navigate('/app/dashboard')
     } catch (err) {
-      console.error('Erro no login demo:', err)
-      setError('Erro ao fazer login. Tente novamente.')
+      console.error('Erro ao entrar em modo desenvolvedor:', err)
+      setError('Erro ao acessar modo desenvolvedor. Tente novamente.')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="w-full mt-4">
+    <div>
       <button
         onClick={enterAdminMode}
         disabled={isLoading}
-        className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 shadow-lg border border-purple-400/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+        className="w-full mt-4 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 shadow-lg border border-purple-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isLoading ? (
-          <>
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            <span>Entrando...</span>
-          </>
-        ) : (
-          <>
-            <span>👑</span>
-            <span>Entrar como Administrador</span>
-          </>
-        )}
+        {isLoading ? '⏳ Entrando...' : '👑 Entrar como Administrador'}
       </button>
       {error && (
-        <p className="text-red-400 text-sm mt-2 text-center">{error}</p>
+        <p className="text-red-500 text-sm mt-2">{error}</p>
       )}
     </div>
   )

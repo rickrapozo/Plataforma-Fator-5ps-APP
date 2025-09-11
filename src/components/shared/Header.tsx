@@ -1,10 +1,11 @@
 import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Bell, User, Crown } from 'lucide-react'
+import { Bell, User } from 'lucide-react'
 import { useAppStore } from '../../stores/useAppStore'
 import { analyticsService } from '../../services/analyticsService'
 import Logo from './Logo'
+import HamburgerMenu from './HamburgerMenu'
 
 const Header: React.FC = () => {
   const { user, streak, notifications, isAdmin, hasCompletedOnboarding } = useAppStore()
@@ -17,86 +18,42 @@ const Header: React.FC = () => {
       animate={{ y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="flex items-center justify-between px-4 py-3 safe-area-top">
-        <Logo />
-        
-        <div className="flex items-center space-x-4">
+      <div className="flex items-center justify-between px-3 sm:px-4 lg:px-6 py-2 sm:py-3 safe-area-top">
+        <div className="flex items-center space-x-2 sm:space-x-4 min-w-0">
+          <HamburgerMenu />
+        </div>
+        <div className="flex-1 flex justify-center">
+          <Logo />
+        </div>
+        <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-4">
           {/* Streak Counter */}
           <motion.div 
-            className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1"
+            className="flex items-center space-x-1 sm:space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-2 sm:px-3 py-1"
             whileTap={{ scale: 0.95 }}
           >
-            <span className="text-lg">🔥</span>
-            <span className="text-white font-semibold text-sm">{streak}</span>
+            <span className="text-base sm:text-lg">🔥</span>
+            <span className="text-white font-semibold text-xs sm:text-sm">{streak}</span>
           </motion.div>
           
-          {/* Admin Panel Link */}
-          {isAdmin() && (
-            <motion.button
-              className="relative p-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 backdrop-blur-sm"
-              whileTap={{ scale: 0.95 }}
-              title="Painel Administrativo"
-              onClick={() => {
-                // Track admin panel button click
-                analyticsService.trackButtonClick(
-                  'admin_panel_button',
-                  user?.id,
-                  user?.role || 'admin',
-                  {
-                    hasCompletedOnboarding: hasCompletedOnboarding,
-                    currentPage: window.location.pathname,
-                    userAgent: navigator.userAgent
-                  }
-                )
 
-                // Track admin panel access attempt
-                analyticsService.trackAdminPanelAccess(
-                  user?.id,
-                  user?.role || 'admin',
-                  true
-                )
-
-                // Check if user will be redirected to onboarding
-                if (!hasCompletedOnboarding) {
-                  analyticsService.trackRedirect(
-                    window.location.pathname,
-                    '/onboarding/welcome',
-                    'incomplete_onboarding',
-                    user?.id,
-                    user?.role || 'admin'
-                  )
-                }
-
-                // Navigate to admin panel
-                navigate('/app/admin')
-              }}
-            >
-              <Crown className="w-5 h-5 text-white" />
-            </motion.button>
-          )}
           
           {/* Notifications */}
           <motion.button
-            className="relative p-2 rounded-full bg-white/10 backdrop-blur-sm"
+            className="relative p-2 rounded-full bg-white/10 backdrop-blur-sm min-w-[44px] min-h-[44px] flex items-center justify-center"
             whileTap={{ scale: 0.95 }}
           >
-            <Bell className="w-5 h-5 text-white" />
+            <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             {notifications && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-royal-gold rounded-full" />
+              <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-royal-gold rounded-full" />
             )}
           </motion.button>
           
           {/* User Profile */}
           <motion.button
-            className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full p-1 pr-3"
+            className="w-7 h-7 sm:w-8 sm:h-8 bg-royal-gold rounded-full flex items-center justify-center min-w-[44px] min-h-[44px]"
             whileTap={{ scale: 0.95 }}
           >
-            <div className="w-8 h-8 bg-royal-gold rounded-full flex items-center justify-center">
-              <User className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-white text-sm font-medium">
-              {user?.name?.split(' ')[0] || 'Usuário'}
-            </span>
+            <User className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
           </motion.button>
         </div>
       </div>

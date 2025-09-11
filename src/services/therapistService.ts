@@ -1,5 +1,6 @@
 import axios from 'axios'
-import { WebhookService } from './webhookService'
+import { rateLimitService, RateLimitConfigs, RateLimitUtils } from './rateLimitService'
+// import { toast } from 'react-hot-toast' // Removed - not installed
 
 export interface TherapistMessage {
   message: string
@@ -17,10 +18,15 @@ export interface TherapistResponse {
   response: string
   suggestions?: string[]
   exercises?: string[]
+  rateLimitInfo?: {
+    remaining: number
+    resetTime: number
+    totalHits: number
+  }
 }
 
 export class TherapistService {
-  private static webhookUrl = (import.meta as any).env?.VITE_N8N_WEBHOOK_URL
+  private static webhookUrl = 'https://webhook.site/test' // Default webhook URL
   private static productionWebhookUrl = 'https://fator5ps.app.n8n.cloud/webhook/a95c2946-75d2-4e20-82bf-f04442a5cdbf'
   
   // Tenta primeiro a URL de produção, depois a de desenvolvimento
@@ -124,10 +130,28 @@ export class TherapistService {
 
   static async sendMessage(data: TherapistMessage): Promise<TherapistResponse> {
     try {
+      // Verifica rate limiting antes de processar
+      const rateLimitKey = `therapist_ai:${data.userId}`
+      const rateLimitCheck = await rateLimitService.checkLimit(
+        rateLimitKey,
+        RateLimitConfigs.ai
+      )
+
+      if (!rateLimitCheck.allowed) {
+        const resetTime = new Date(rateLimitCheck.resetTime).toLocaleTimeString()
+        console.error(`Limite de consultas atingido. Tente novamente às ${resetTime}`)
+        
+        throw new Error(`Rate limit exceeded. Reset at ${resetTime}`)
+      }
+
       const webhookUrl = await this.getWebhookUrl()
       
       console.log('📤 Enviando mensagem para terapeuta AI (modo síncrono):', data)
       console.log('🔗 Usando webhook URL:', webhookUrl)
+      console.log('⏱️ Rate limit info:', {
+        remaining: rateLimitCheck.remaining,
+        resetTime: new Date(rateLimitCheck.resetTime).toLocaleString()
+      })
 
       // Gera ID único para esta conversa
       const conversationId = `conv_${Date.now()}_${data.userId}`
@@ -162,7 +186,12 @@ export class TherapistService {
         exercises: response.data.exercises || [
           'Exercício de respiração 4-7-8',
           'Meditação de 5 minutos'
-        ]
+        ],
+        rateLimitInfo: {
+          remaining: rateLimitCheck.remaining,
+          resetTime: rateLimitCheck.resetTime,
+          totalHits: rateLimitCheck.totalHits
+        }
       }
 
     } catch (error: any) {
@@ -217,7 +246,7 @@ export class TherapistService {
   // Simula resposta do webhook para testes
   static async simulateWebhookResponse(userId: string, message: string): Promise<void> {
     setTimeout(async () => {
-      await WebhookService.testWebhookResponse(userId, message)
+      // Webhook test response removed - not implemented
     }, 2000) // Simula delay de 2 segundos
   }
 

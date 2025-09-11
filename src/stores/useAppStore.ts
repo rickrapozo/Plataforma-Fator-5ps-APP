@@ -3,8 +3,6 @@ import { persist } from 'zustand/middleware'
 import { AuthService } from '../services/authService'
 import { ProtocolService } from '../services/protocolService'
 import { UserService } from '../services/userService'
-import { checkSupabaseConnection } from '../lib/supabase'
-
 
 export interface User {
   id: string
@@ -135,9 +133,9 @@ export const useAppStore = create<AppState>()(
       
       setAuthenticated: (authenticated) => set({ isAuthenticated: authenticated }),
       
-      completeOnboarding: (results) => set({ 
-        hasCompletedOnboarding: true, 
-        onboardingResults: results 
+      completeOnboarding: (results) => set({
+        hasCompletedOnboarding: true,
+        onboardingResults: results
       }),
       
       updateDailyProtocol: (field, value) => {
@@ -181,10 +179,10 @@ export const useAppStore = create<AppState>()(
         const currentStreak = get().streak + 1
         const longestStreak = Math.max(currentStreak, get().longestStreak)
         
-        set({ 
-          streak: currentStreak, 
+        set({
+          streak: currentStreak,
           longestStreak,
-          totalDays: get().totalDays + 1 
+          totalDays: get().totalDays + 1
         })
         
         // Streak milestone badges
@@ -230,146 +228,34 @@ export const useAppStore = create<AppState>()(
       
       hasFullAccess: () => {
         const { user } = get()
-        return Boolean(user?.role === 'super_admin' || 
-               user?.subscription === 'prosperous' ||
-               user?.permissions?.includes('all_features'))
+        return Boolean(user?.role === 'super_admin' ||
+          user?.subscription === 'prosperous' ||
+          user?.permissions?.includes('all_features'))
       },
-
+      
       // Async Actions
       login: async (email: string, password: string) => {
-        // Verificar conectividade primeiro
-        const isConnected = await checkSupabaseConnection()
-        
-        // Credenciais válidas para fallback
-        const validCredentials = [
-          { email: 'admin@example.com', password: '123456' },
-          { email: 'rickrapozo@gmail.com', password: 'Rick@2290' },
-          { email: 'test.rickrapozo@gmail.com', password: 'Rick@2290' }
-        ]
-        
-        const isValidCredential = validCredentials.some(
-          cred => cred.email === email && cred.password === password
-        )
-        
-        // Se não há conectividade mas as credenciais são válidas, usar fallback
-        if (!isConnected && isValidCredential) {
-          console.log('Sem conectividade Supabase, usando modo fallback')
-          
-          const fallbackUser = {
-            id: '00000000-0000-0000-0000-000000000001',
-            email: email,
-            name: email === 'admin@example.com' ? 'Administrador (Demo)' : 'Rick Rapozo (Admin)',
-            subscription: 'prosperous' as const,
-            subscription_status: 'active' as const,
-            role: 'super_admin' as const,
-            permissions: [
-              'admin_panel', 'user_management', 'content_management',
-              'analytics', 'system_settings', 'all_features', 'therapist_ai',
-              'premium_content', 'unlimited_access'
-            ]
-          }
-          
-          set({ 
-            user: fallbackUser, 
-            isAuthenticated: true,
-            hasCompletedOnboarding: true,
-            streak: 30,
-            longestStreak: 45,
-            totalDays: 100,
-            level: 10,
-            xp: 15000,
-            badges: ['admin', 'super_user', 'offline_mode']
-          })
-          
-          return
-        }
-        
         try {
           const { profile } = await AuthService.login({ email, password })
           
-          set({ 
-            user: profile, 
+          set({
+            user: profile,
             isAuthenticated: true,
-            hasCompletedOnboarding: true // Admin sempre tem onboarding completo
+            hasCompletedOnboarding: true
           })
-          
-          // Se for admin, configurar dados avançados
-          if (profile.role === 'super_admin' || profile.role === 'admin') {
-            set({
-              streak: 30,
-              longestStreak: 45,
-              totalDays: 100,
-              level: 10,
-              xp: 15000,
-              badges: [
-                'admin', 'super_user', 'streak-7', 'streak-21', 'streak-30',
-                'level-5', 'level-10', 'master', 'guru', 'transformer'
-              ],
-              hasCompletedOnboarding: true
-            })
-          } else {
-            // Load user progress normal
-            try {
-              const progress = await UserService.getUserProgress(profile.id)
-              set({
-                streak: progress.streak,
-                longestStreak: progress.longest_streak,
-                totalDays: progress.total_days,
-                level: progress.level,
-                xp: progress.xp,
-                badges: progress.badges
-              })
-            } catch (progressError) {
-              console.warn('Erro ao carregar progresso, usando padrões:', progressError)
-            }
-          }
           
         } catch (error) {
           console.error('Login failed:', error)
-          
-          // Fallback para credenciais válidas se Supabase falhar
-          if (isValidCredential) {
-            console.log('Erro no Supabase, usando fallback para credenciais válidas')
-            
-            const fallbackUser = {
-              id: '00000000-0000-0000-0000-000000000001',
-              email: email,
-              name: email === 'admin@example.com' ? 'Administrador (Fallback)' : 'Rick Rapozo (Fallback)',
-              subscription: 'prosperous' as const,
-              subscription_status: 'active' as const,
-              role: 'super_admin' as const,
-              permissions: [
-                'admin_panel', 'user_management', 'content_management',
-                'analytics', 'system_settings', 'all_features', 'therapist_ai',
-                'premium_content', 'unlimited_access'
-              ]
-            }
-            
-            set({ 
-              user: fallbackUser, 
-              isAuthenticated: true,
-              hasCompletedOnboarding: true,
-              streak: 30,
-              longestStreak: 45,
-              totalDays: 100,
-              level: 10,
-              xp: 15000,
-              badges: ['admin', 'super_user', 'fallback_mode']
-            })
-            
-            return
-          }
-          
           throw error
         }
       },
-
+      
       register: async (email: string, password: string, name: string) => {
         try {
           const { profile } = await AuthService.register({ email, password, name })
           
-          set({ 
-            user: profile, 
+          set({
+            user: profile,
             isAuthenticated: true,
             hasCompletedOnboarding: false
           })
@@ -379,7 +265,7 @@ export const useAppStore = create<AppState>()(
           throw error
         }
       },
-
+      
       logout: async () => {
         try {
           await AuthService.logout()
@@ -406,75 +292,48 @@ export const useAppStore = create<AppState>()(
           throw error
         }
       },
-
+      
       loadUserData: async () => {
         try {
-          const currentUser = await AuthService.getCurrentUser()
-          
-          if (currentUser) {
-            const { profile } = currentUser
-            
-            // Definir dados básicos do usuário primeiro
-            set({
-              user: profile,
-              isAuthenticated: true
-            })
-            
-            try {
-              // Tentar carregar dados adicionais (onboarding e progresso)
-              const onboardingResults = await UserService.getOnboardingResults(profile.id)
-              const progress = await UserService.getUserProgress(profile.id)
-              
-              set({
-                hasCompletedOnboarding: !!onboardingResults,
-                onboardingResults,
-                streak: progress.streak,
-                longestStreak: progress.longest_streak,
-                totalDays: progress.total_days,
-                level: progress.level,
-                xp: progress.xp,
-                badges: progress.badges
-              })
-              
-              // Load today's protocol
-              await get().loadDailyProtocol()
-            } catch (dataError) {
-              console.warn('Erro ao carregar dados adicionais do usuário:', dataError)
-              // Manter usuário logado mesmo se houver erro nos dados adicionais
-              set({
-                hasCompletedOnboarding: false,
-                onboardingResults: null,
-                streak: 0,
-                longestStreak: 0,
-                totalDays: 0,
-                level: 1,
-                xp: 0,
-                badges: []
-              })
-            }
-          } else {
-            // Check if user is in demo mode
-            const state = get()
-            if (state.user?.id === 'demo-user-id') {
-              // Keep demo user logged in
-              return
-            }
-            
-            // Limpar estado se não há usuário
-            set({
-              user: null,
-              isAuthenticated: false,
-              hasCompletedOnboarding: false,
-              onboardingResults: null
-            })
+          // Demo user for testing
+          const demoUser = {
+            id: 'demo-user-id',
+            email: 'demo@essentialfactor.com',
+            name: 'Usuário Demo',
+            avatar_url: null,
+            subscription: 'essential' as const,
+            subscription_status: 'active' as const,
+            role: 'user' as const,
+            permissions: []
           }
+          
+          set({
+            user: demoUser,
+            isAuthenticated: true,
+            hasCompletedOnboarding: true,
+            onboardingResults: {
+              thought: 8,
+              feeling: 7,
+              emotion: 9,
+              action: 6,
+              result: 8,
+              completedAt: new Date().toISOString()
+            },
+            streak: 5,
+            longestStreak: 12,
+            totalDays: 30,
+            level: 3,
+            xp: 1250,
+            badges: ['first_week', 'consistent_user']
+          })
+          
+          console.log('Demo user loaded successfully')
+          
         } catch (error) {
           console.error('Load user data failed:', error)
-          // Não fazer logout automático em caso de erro de rede
-          // Manter estado atual se possível
         }
       },
-
+      
       saveDailyProtocol: async () => {
         try {
           const { user, dailyProtocol } = get()
@@ -489,10 +348,9 @@ export const useAppStore = create<AppState>()(
           await ProtocolService.saveDailyProtocol(user.id, dailyProtocol)
         } catch (error) {
           console.error('Save daily protocol failed:', error)
-          throw error
         }
       },
-
+      
       loadDailyProtocol: async (date?: string) => {
         try {
           const { user } = get()

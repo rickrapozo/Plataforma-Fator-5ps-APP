@@ -99,3 +99,44 @@
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 }
+
+/* Responsive improvements */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Prevent horizontal scroll on mobile */
+.container {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Touch improvements for mobile */
+@media (max-width: 768px) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  button, a {
+    touch-action: manipulation;
+  }
+  
+  /* Ensure proper spacing on mobile */
+  .px-4 {
+    @apply px-3;
+  }
+  
+  .px-6 {
+    @apply px-4;
+  }
+  
+  /* Improve text readability on small screens */
+  .text-sm {
+    @apply text-base;
+  }
+}

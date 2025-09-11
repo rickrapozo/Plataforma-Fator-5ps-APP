@@ -35,11 +35,11 @@ interface ErrorLog {
 
 class MonitoringService {
   private static instance: MonitoringService
-
+  private alerts: SystemAlert[] = []
   private activities: UserActivity[] = []
   private errors: ErrorLog[] = []
   private sessionId: string
-
+  private startTime: number
   private pageViews: Map<string, number> = new Map()
   private apiCalls: number = 0
   private errorCount: number = 0
@@ -52,6 +52,7 @@ class MonitoringService {
 
   constructor() {
     this.sessionId = this.generateSessionId()
+    this.startTime = Date.now()
     this.initializeMonitoring()
   }
 
@@ -137,7 +138,7 @@ class MonitoringService {
     this.activities.push(activity)
   }
 
-  trackUserAction(action: string, page: string, userId?: string) {
+  trackUserAction(action: string, page: string, userId?: string, metadata?: any) {
     const activity: UserActivity = {
       user_id: userId || 'anonymous',
       action,
@@ -192,7 +193,20 @@ class MonitoringService {
     this.localMetrics = enhancedMetrics
   }
 
+  private getCpuUsage(): number {
+    // Simulação de uso de CPU baseado na atividade
+    const baseUsage = 10 + Math.random() * 20
+    const activityMultiplier = Math.min(this.activities.length / 100, 2)
+    return Math.min(baseUsage + (activityMultiplier * 30), 100)
+  }
 
+  private getMemoryUsage(): number {
+    if (typeof performance !== 'undefined' && (performance as any).memory) {
+      const memory = (performance as any).memory
+      return (memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100
+    }
+    return 30 + Math.random() * 40 // Fallback
+  }
 
 
 

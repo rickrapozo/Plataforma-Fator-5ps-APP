@@ -143,7 +143,7 @@ class CacheManager {
     let count = 0
     const regex = new RegExp(pattern)
     
-    for (const key of this.cache.keys()) {
+    for (const key of Array.from(this.cache.keys())) {
       if (regex.test(key)) {
         this.cache.delete(key)
         count++
@@ -173,7 +173,7 @@ class CacheManager {
     const now = Date.now()
     const keysToDelete: string[] = []
     
-    for (const [key, item] of this.cache.entries()) {
+    for (const [key, item] of Array.from(this.cache.entries())) {
       if (now > item.expiry) {
         keysToDelete.push(key)
       }

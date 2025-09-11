@@ -212,9 +212,9 @@ const SystemSettingsPage: React.FC = () => {
         id: '13',
         category: 'api',
         key: 'gemini_api_key',
-        value: 'AIzaSyBt4vyuZZhxDd5Vz1I4WfkTzKWht7SdcNA',
+        value: '••••••••••••••••••••••••••••••••••••••••',
         type: 'password',
-        description: 'Chave da API do Gemini AI',
+        description: 'Chave da API do Gemini AI (configurada via variável de ambiente)',
         required: true,
         sensitive: true
       },

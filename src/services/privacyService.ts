@@ -95,6 +95,11 @@ class PrivacyService {
   // Obter configurações de privacidade do usuário
   async getPrivacySettings(userId: string): Promise<PrivacySettings> {
     try {
+      // Verificar se é usuário demo
+      if (userId === 'demo-user-id') {
+        return this.getDefaultPrivacySettings(userId)
+      }
+
       const { data, error } = await supabase
         .from('privacy_settings')
         .select('*')
@@ -428,6 +433,11 @@ class PrivacyService {
   // Verificar se o usuário deu consentimento para um tipo específico
   async hasConsent(userId: string, consentType: UserConsent['consent_type']): Promise<boolean> {
     try {
+      // Verificar se é usuário demo
+      if (userId === 'demo-user-id') {
+        return true // Usuário demo tem todos os consentimentos
+      }
+
       const { data, error } = await supabase
         .from('user_consents')
         .select('granted')

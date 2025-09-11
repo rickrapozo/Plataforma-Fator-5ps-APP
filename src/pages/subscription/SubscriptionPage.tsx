@@ -1,42 +1,39 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Check, Gift, Star, Quote, Crown, Sparkles, Shield, Zap } from 'lucide-react'
+import { Check, Gift, Star, Quote, Crown, Sparkles, Shield, Zap, Loader2 } from 'lucide-react'
+import { toast } from 'react-toastify'
+import { useAppStore } from '../../stores/useAppStore'
+import { paymentService } from '../../services/paymentService'
 
 const SubscriptionPage: React.FC = () => {
   const [selectedBilling, setSelectedBilling] = useState<'monthly' | 'yearly'>('yearly')
+  const [loading, setLoading] = useState<string | null>(null)
+  const { user } = useAppStore()
 
-  const plans = [
-    {
-      id: 'basic',
-      name: 'Plano Básico',
-      price: { monthly: 9.99, yearly: 99.90 },
-      features: [
-        'Protocolo Diário 5P completo',
-        'Uma Jornada Guiada',
-        'Biblioteca básica de áudios',
-        'Progresso e estatísticas',
-        'Suporte por email'
-      ],
-      color: 'from-sage-green to-forest-green',
-      popular: false
-    },
-    {
-      id: 'complete',
-      name: 'Plano Completo',
-      price: { monthly: 19.97, yearly: 199.70 },
-      features: [
-        'Tudo do Plano Básico',
-        '🌟 Terapeuta Essencial AI ilimitado',
-        'Todas as Jornadas Guiadas',
-        'Biblioteca completa de áudios',
-        'Análises avançadas de progresso',
-        'Relatórios personalizados',
-        'Suporte prioritário'
-      ],
-      color: 'from-royal-gold to-bright-gold',
-      popular: true
+  const plans = paymentService.getAvailablePlans()
+
+  const handleSelectPlan = async (planId: string) => {
+    if (!user) {
+      toast.error('Você precisa estar logado para assinar um plano')
+      return
     }
-  ]
+
+    if (loading) return
+
+    try {
+      setLoading(planId)
+      console.log('🛒 Iniciando checkout para plano:', planId)
+      
+      await paymentService.startCheckout(planId, selectedBilling, user.id)
+      
+      // Se chegou até aqui, o usuário foi redirecionado para o Stripe
+      // O loading será limpo quando a página recarregar ou o usuário voltar
+    } catch (error) {
+      console.error('❌ Erro ao iniciar checkout:', error)
+      toast.error('Erro ao processar pagamento. Tente novamente.')
+      setLoading(null)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-deep-forest via-forest-green to-sage-green p-4 pb-24 relative overflow-hidden">
@@ -235,19 +232,23 @@ const SubscriptionPage: React.FC = () => {
               </div>
 
               <motion.button
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: loading === plan.id ? 1 : 1.02, y: loading === plan.id ? 0 : -2 }}
+                whileTap={{ scale: loading === plan.id ? 1 : 0.98 }}
+                disabled={loading === plan.id}
+                onClick={() => handleSelectPlan(plan.id)}
                 className={`w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 relative overflow-hidden group ${
                   plan.popular
                     ? 'bg-gradient-to-r from-royal-gold via-bright-gold to-royal-gold text-white shadow-2xl shadow-royal-gold/25 hover:shadow-royal-gold/40'
                     : 'bg-gradient-to-r from-forest-green to-sage-green text-white hover:from-sage-green hover:to-mint-accent shadow-xl'
-                }`}
+                } ${loading === plan.id ? 'opacity-75 cursor-not-allowed' : ''}`}
               >
                 {plan.popular && (
                   <div className="absolute inset-0 bg-gradient-to-r from-royal-gold/20 via-bright-gold/20 to-royal-gold/20 group-hover:from-royal-gold/30 group-hover:via-bright-gold/30 group-hover:to-royal-gold/30 transition-all duration-300"></div>
                 )}
                 <div className="relative z-10 flex items-center justify-center space-x-2">
-                  {plan.popular ? (
+                  {loading === plan.id ? (
+                    <><Loader2 className="w-5 h-5 animate-spin" /><span>Processando...</span></>
+                  ) : plan.popular ? (
                     <><Zap className="w-5 h-5" /><span>Começar Agora</span><Sparkles className="w-4 h-4" /></>
                   ) : (
                     <><Shield className="w-5 h-5" /><span>Escolher Plano</span></>

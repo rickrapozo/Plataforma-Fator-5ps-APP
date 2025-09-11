@@ -64,34 +64,16 @@ const CookieConsentBanner: React.FC<CookieConsentBannerProps> = ({
   const handleAcceptAll = async () => {
     setLoading(true)
     try {
-      if (user?.id) {
-        // Usuário logado - tentar salvar no banco, fallback para localStorage
-        try {
-          await Promise.all([
-            privacyService.recordConsent(user.id, 'cookies', true),
-            privacyService.recordConsent(user.id, 'analytics', true),
-            privacyService.recordConsent(user.id, 'marketing_emails', true)
-          ])
-        } catch (dbError) {
-          console.warn('Erro ao salvar no banco, usando localStorage:', dbError)
-          // Fallback para localStorage se o banco falhar
-          localStorage.setItem('cookie_consent', JSON.stringify({
-            cookies: true,
-            analytics: true,
-            marketing: true,
-            timestamp: new Date().toISOString(),
-            userId: user.id
-          }))
-        }
-      } else {
-        // Usuário não logado - salvar no localStorage
-        localStorage.setItem('cookie_consent', JSON.stringify({
-          cookies: true,
-          analytics: true,
-          marketing: true,
-          timestamp: new Date().toISOString()
-        }))
+      // Salvar consentimento no localStorage
+      const consentData = {
+        cookies: true,
+        analytics: true,
+        marketing: true,
+        timestamp: new Date().toISOString(),
+        ...(user?.id && { userId: user.id })
       }
+      
+      localStorage.setItem('cookie_consent', JSON.stringify(consentData))
       
       setIsVisible(false)
       onAcceptAll?.()
@@ -107,30 +89,16 @@ const CookieConsentBanner: React.FC<CookieConsentBannerProps> = ({
   const handleRejectAll = async () => {
     setLoading(true)
     try {
-      if (user?.id) {
-        // Usuário logado - tentar salvar no banco, fallback para localStorage
-        try {
-          await privacyService.recordConsent(user.id, 'cookies', true) // Essenciais sempre aceitos
-        } catch (dbError) {
-          console.warn('Erro ao salvar no banco, usando localStorage:', dbError)
-          // Fallback para localStorage se o banco falhar
-          localStorage.setItem('cookie_consent', JSON.stringify({
-            cookies: true, // Essenciais sempre aceitos
-            analytics: false,
-            marketing: false,
-            timestamp: new Date().toISOString(),
-            userId: user.id
-          }))
-        }
-      } else {
-        // Usuário não logado - salvar no localStorage
-        localStorage.setItem('cookie_consent', JSON.stringify({
-          cookies: true, // Essenciais sempre aceitos
-          analytics: false,
-          marketing: false,
-          timestamp: new Date().toISOString()
-        }))
+      // Salvar consentimento no localStorage
+      const consentData = {
+        cookies: true, // Essenciais sempre aceitos
+        analytics: false,
+        marketing: false,
+        timestamp: new Date().toISOString(),
+        ...(user?.id && { userId: user.id })
       }
+      
+      localStorage.setItem('cookie_consent', JSON.stringify(consentData))
       
       setIsVisible(false)
       onRejectAll?.()

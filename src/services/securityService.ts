@@ -27,13 +27,73 @@ interface SecurityEvent {
 
 class SecurityService {
   private rateLimitMap = new Map<string, RateLimitEntry>()
-  private securityConfig: SecurityConfig = {
-    jwtSecret: 'super_secret_jwt_key_here',
-    sessionTimeout: 86400, // 24 horas (em segundos)
-    passwordMinLength: 8,
-    twoFactorEnabled: true,
-    rateLimitPerMinute: 100,
-    apiTimeout: 30000
+  private securityConfig: SecurityConfig
+
+  constructor() {
+    this.initializeSecurityConfig()
+  }
+
+  // Inicializa configurações de segurança a partir de variáveis de ambiente
+  private initializeSecurityConfig() {
+    this.securityConfig = {
+      jwtSecret: process.env.VITE_JWT_SECRET || this.generateFallbackSecret(),
+      sessionTimeout: parseInt(process.env.VITE_SESSION_TIMEOUT || '86400'), // 24 horas padrão
+      passwordMinLength: parseInt(process.env.VITE_PASSWORD_MIN_LENGTH || '8'),
+      twoFactorEnabled: process.env.VITE_TWO_FACTOR_ENABLED === 'true',
+      rateLimitPerMinute: parseInt(process.env.VITE_RATE_LIMIT_PER_MINUTE || '100'),
+      apiTimeout: parseInt(process.env.VITE_API_TIMEOUT || '30000')
+    }
+
+    // Validar configurações críticas
+    this.validateSecurityConfig()
+  }
+
+  // Gera uma chave secreta de fallback (não recomendado para produção)
+  private generateFallbackSecret(): string {
+    console.warn('⚠️ AVISO: Usando chave JWT de fallback. Configure VITE_JWT_SECRET para produção!')
+    return `fallback_${Date.now()}_${Math.random().toString(36).substring(2)}`
+  }
+
+  // Valida configurações de segurança
+  private validateSecurityConfig() {
+    const errors: string[] = []
+
+    if (!this.securityConfig.jwtSecret || this.securityConfig.jwtSecret.length < 32) {
+      errors.push('JWT Secret deve ter pelo menos 32 caracteres')
+    }
+
+    if (this.securityConfig.sessionTimeout < 300) { // 5 minutos mínimo
+      errors.push('Session timeout deve ser pelo menos 300 segundos (5 minutos)')
+    }
+
+    if (this.securityConfig.passwordMinLength < 6) {
+      errors.push('Password min length deve ser pelo menos 6 caracteres')
+    }
+
+    if (this.securityConfig.rateLimitPerMinute < 1) {
+      errors.push('Rate limit deve ser pelo menos 1 por minuto')
+    }
+
+    if (errors.length > 0) {
+      console.error('❌ Erros na configuração de segurança:', errors)
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(`Configuração de segurança inválida: ${errors.join(', ')}`)
+      }
+    }
+
+    console.log('🔒 Configurações de segurança inicializadas:', {
+      sessionTimeout: this.securityConfig.sessionTimeout,
+      passwordMinLength: this.securityConfig.passwordMinLength,
+      twoFactorEnabled: this.securityConfig.twoFactorEnabled,
+      rateLimitPerMinute: this.securityConfig.rateLimitPerMinute,
+      apiTimeout: this.securityConfig.apiTimeout
+    })
+  }
+
+  // Obtém configurações de segurança (sem expor dados sensíveis)
+  getSecurityConfig(): Omit<SecurityConfig, 'jwtSecret'> {
+    const { jwtSecret, ...safeConfig } = this.securityConfig
+    return safeConfig
   }
 
   // Configurar configurações de segurança
@@ -104,16 +164,6 @@ class SecurityService {
   // Validar sessão do usuário
   async validateSession(userId: string): Promise<{ isValid: boolean; user?: User }> {
     try {
-      // Verificar se é um usuário em modo fallback/offline
-      const isFallbackUser = userId === '00000000-0000-0000-0000-000000000001'
-      
-      if (isFallbackUser) {
-        console.log('Usuário em modo fallback detectado, pulando validação Supabase')
-        // Para usuários fallback, sempre considerar sessão válida
-        // O usuário já foi validado no login
-        return { isValid: true }
-      }
-      
       const { data: { session }, error } = await supabase.auth.getSession()
       
       if (error) {
@@ -218,6 +268,16 @@ class SecurityService {
     details: Record<string, any> = {}
   ): Promise<void> {
     try {
+      // Verificar se é usuário demo
+      if (userId === 'demo-user-id') {
+        console.log('Evento de segurança (modo demo):', {
+          userId,
+          eventType,
+          details
+        })
+        return
+      }
+
       const ipAddress = await this.getClientIP()
       const userAgent = navigator.userAgent
       
@@ -384,10 +444,7 @@ class SecurityService {
     }
   }
 
-  // Obter configurações de segurança atuais
-  getSecurityConfig(): SecurityConfig {
-    return { ...this.securityConfig }
-  }
+
 
   // Verificar se 2FA está habilitado para o usuário
   async isTwoFactorEnabled(userId: string): Promise<boolean> {

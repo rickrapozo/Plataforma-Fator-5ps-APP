@@ -1,0 +1,66 @@
+# Dependências
+node_modules/
+
+# Build outputs
+.next/
+dist/
+build/
+out/
+
+# Cache
+.cache/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Coverage
+coverage/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Package files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Generated files
+*.min.js
+*.min.css
+
+# Public assets
+public/
+
+# Database dumps
+*.sql.backup
+*.dump
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Documentation that should maintain specific formatting
+CHANGELOG.md
+LICENSE
+
+# Config files that may have specific formatting requirements
+.gitignore
+.eslintignore

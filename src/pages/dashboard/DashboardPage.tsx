@@ -1,25 +1,28 @@
 import React, { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useAppStore } from '../../stores/useAppStore'
-import WelcomeHeader from '../../components/dashboard/WelcomeHeader'
-import DailyProgress from '../../components/dashboard/DailyProgress'
+import DynamicGreeting from '../../components/dashboard/DynamicGreeting'
+import FivePsPanel from '../../components/dashboard/FivePsPanel'
+import DailyJourney from '../../components/dashboard/DailyJourney'
+
+import VoiceCrisisMode from '../../components/crisis/VoiceCrisisMode'
+
 import StreakCounter from '../../components/dashboard/StreakCounter'
 import WeeklyStats from '../../components/dashboard/WeeklyStats'
 import AchievementSystem from '../../components/dashboard/AchievementSystem'
-import ProtocolSection from '../../components/dashboard/ProtocolSection'
-import AffirmationsChecklist from '../../components/dashboard/AffirmationsChecklist'
-import FeelingTracker from '../../components/dashboard/FeelingTracker'
-import PeakStateActivator from '../../components/dashboard/PeakStateActivator'
-import AMVTracker from '../../components/dashboard/AMVTracker'
-import NightlyReflection from '../../components/dashboard/NightlyReflection'
+
 
 const DashboardPage: React.FC = () => {
   const { 
+    user, 
     dailyProtocol, 
     updateDailyProtocol, 
     addXP, 
     incrementStreak,
-    saveDailyProtocol 
+    saveDailyProtocol,
+    streak,
+    xp,
+    level 
   } = useAppStore()
 
   const isNightTime = new Date().getHours() >= 18
@@ -67,92 +70,27 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-deep-forest to-forest-green pb-20">
-      <div className="px-4 py-6 space-y-6">
-        <WelcomeHeader />
-        <DailyProgress />
-        <StreakCounter />
-        <WeeklyStats />
-        <AchievementSystem />
+      <div className="px-4 py-6 space-y-8">
+        {/* Dynamic Greeting */}
+        <DynamicGreeting />
+
+        {/* Main Dashboard Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Journey and 5Ps Panel */}
+          <div className="lg:col-span-2 space-y-8">
+            <DailyJourney />
+            <FivePsPanel />
+          </div>
+          
+          {/* Right Column - Stats and Progress */}
+          <div className="space-y-6">
+            <StreakCounter />
+            <WeeklyStats />
+            <AchievementSystem />
+          </div>
+        </div>
         
-        {/* P1 - Pensamento */}
-        <ProtocolSection
-          title="P1 - Reprogramação do Pensamento"
-          icon="Brain"
-          completed={dailyProtocol.p1_affirmations.length === 3}
-          description="Reprograme sua mente com afirmações poderosas"
-        >
-          <AffirmationsChecklist
-            affirmations={dailyProtocol.p1_affirmations}
-            onUpdate={(affirmations) => updateDailyProtocol('p1_affirmations', affirmations)}
-          />
-        </ProtocolSection>
 
-        {/* P2 - Sentimento */}
-        <ProtocolSection
-          title="P2 - Registro de Sentimentos"
-          icon="Heart"
-          completed={!!dailyProtocol.p2_feeling}
-          description="Identifique e registre seus sentimentos atuais"
-        >
-          <FeelingTracker
-            currentFeeling={dailyProtocol.p2_feeling}
-            trigger={dailyProtocol.p2_trigger}
-            onUpdate={(feeling, trigger) => {
-              updateDailyProtocol('p2_feeling', feeling)
-              updateDailyProtocol('p2_trigger', trigger)
-            }}
-          />
-        </ProtocolSection>
-
-        {/* P3 - Emoção */}
-        <ProtocolSection
-          title="P3 - Ativação do Estado Peak"
-          icon="Zap"
-          completed={dailyProtocol.p3_peak_state_completed}
-          description="Ative seu estado emocional de alta performance"
-        >
-          <PeakStateActivator
-            onComplete={() => updateDailyProtocol('p3_peak_state_completed', true)}
-            completed={dailyProtocol.p3_peak_state_completed}
-          />
-        </ProtocolSection>
-
-        {/* P4 - Ação */}
-        <ProtocolSection
-          title="P4 - Ação Mínima Viável"
-          icon="Target"
-          completed={dailyProtocol.p4_completed}
-          description="Defina e execute uma ação concreta hoje"
-        >
-          <AMVTracker
-            amv={dailyProtocol.p4_amv}
-            completed={dailyProtocol.p4_completed}
-            onUpdate={(amv, completed) => {
-              updateDailyProtocol('p4_amv', amv)
-              updateDailyProtocol('p4_completed', completed)
-            }}
-          />
-        </ProtocolSection>
-
-        {/* P5 - Resultado (Noturno) */}
-        {isNightTime && (
-          <ProtocolSection
-            title="P5 - Reflexão Noturna"
-            icon="Moon"
-            completed={!!(dailyProtocol.p5_victory && dailyProtocol.p5_gratitude)}
-            description="Reflita sobre seu dia e celebre suas conquistas"
-            nightOnly={true}
-          >
-            <NightlyReflection
-              data={{
-                victory: dailyProtocol.p5_victory,
-                feedback: dailyProtocol.p5_feedback,
-                gratitude: dailyProtocol.p5_gratitude
-              }}
-              onUpdate={(field, value) => updateDailyProtocol(`p5_${field}` as any, value)}
-            />
-          </ProtocolSection>
-        )}
 
         {/* Completion Celebration */}
         {isProtocolComplete() && (
@@ -172,11 +110,16 @@ const DashboardPage: React.FC = () => {
               Protocolo Completo!
             </h3>
             <p className="text-pearl-white/80 text-body-md">
-              Parabéns! Você completou seu protocolo diário 5P. Continue assim!
+              Parabens! Voce completou seu protocolo diario 5P. Continue assim!
             </p>
           </motion.div>
         )}
       </div>
+      
+      {/* Voice Crisis Mode - Global Floating Component */}
+      <VoiceCrisisMode />
+      
+
     </div>
   )
 }

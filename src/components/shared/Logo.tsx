@@ -4,19 +4,16 @@ import { motion } from 'framer-motion'
 const Logo: React.FC = () => {
   return (
     <motion.div 
-      className="flex items-center justify-center space-x-3"
+      className="flex items-center justify-center w-full"
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
-      <div className="w-12 h-12 bg-gradient-to-br from-royal-gold to-bright-gold rounded-lg flex items-center justify-center shadow-lg">
-        <span className="text-white font-bold text-lg">5P</span>
-      </div>
-      <div className="text-left">
-        <h1 className="text-white font-heading font-bold text-lg leading-tight">
+      <div className="text-center flex flex-col items-center justify-center w-full">
+        <h1 className="text-white font-heading font-bold text-lg sm:text-xl lg:text-2xl leading-tight text-center w-full">
           Fator Essencial
         </h1>
-        <p className="text-gold-shimmer text-xs font-medium">
-          Método 5Ps Plataforma
+        <p className="text-gold-shimmer text-xs sm:text-sm lg:text-base font-medium text-center w-full">
+          Método 5Ps Plataforma AI
         </p>
       </div>
     </motion.div>

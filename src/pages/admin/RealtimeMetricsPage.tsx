@@ -16,13 +16,20 @@ import {
   Zap,
   Server,
   Clock,
-
-  Shield
+  BarChart3,
+  PieChart,
+  LineChart,
+  Shield,
+  Cpu,
+  MemoryStick
 } from 'lucide-react'
-
+import { useAppStore } from '../../stores/useAppStore'
 import { useAdminAuth } from '../../hooks/useSecureAuth'
 import useRealtimeMetrics from '../../hooks/useRealtimeMetrics'
+import { SystemMetrics } from '../../services/dataService'
+
 const RealtimeMetricsPage: React.FC = () => {
+  const { user } = useAppStore()
   const navigate = useNavigate()
   const { isLoading: authLoading, isAuthorized, error: authError, logAction } = useAdminAuth()
   const [selectedTimeRange, setSelectedTimeRange] = useState('1h')
@@ -38,6 +45,7 @@ const RealtimeMetricsPage: React.FC = () => {
     getActiveUsers,
     getErrorRate,
     getPerformanceScore,
+    isHealthy,
     hasWarnings,
     isCritical,
     hasAnalysis
@@ -270,9 +278,9 @@ const RealtimeMetricsPage: React.FC = () => {
           
           <MetricCard
             title="Visualizações"
-            value={formatNumber(metrics.current?.totalUsers || 0)}
+            value={formatNumber(metrics.current?.totalSessions || 0)}
             icon={<Eye className="w-6 h-6 text-royal-gold" />}
-            trend={getMetricsTrend('totalUsers')}
+            trend={getMetricsTrend('totalSessions')}
             subtitle="Total hoje"
           />
           
@@ -298,7 +306,7 @@ const RealtimeMetricsPage: React.FC = () => {
           <MetricCard
             title="CPU"
             value={formatPercentage(metrics.current?.cpuUsage || 0)}
-            icon={<Server className="w-6 h-6 text-royal-gold" />}
+            icon={<Cpu className="w-6 h-6 text-royal-gold" />}
             trend={getMetricsTrend('cpuUsage')}
             color={metrics.current && metrics.current.cpuUsage > 80 ? 'text-error-red' : metrics.current && metrics.current.cpuUsage > 60 ? 'text-warning-yellow' : 'text-success-green'}
           />
@@ -306,7 +314,7 @@ const RealtimeMetricsPage: React.FC = () => {
           <MetricCard
             title="Memória"
             value={formatPercentage(metrics.current?.memoryUsage || 0)}
-            icon={<Activity className="w-6 h-6 text-royal-gold" />}
+            icon={<MemoryStick className="w-6 h-6 text-royal-gold" />}
             trend={getMetricsTrend('memoryUsage')}
             color={metrics.current && metrics.current.memoryUsage > 85 ? 'text-error-red' : metrics.current && metrics.current.memoryUsage > 70 ? 'text-warning-yellow' : 'text-success-green'}
           />
@@ -423,7 +431,7 @@ const RealtimeMetricsPage: React.FC = () => {
         {metrics.errors.length > 0 && (
           <ChartCard title="Logs de Erro Recentes">
             <div className="space-y-3 max-h-64 overflow-y-auto">
-              {metrics.errors.slice(-10).reverse().map((error) => (
+              {metrics.errors.slice(-10).reverse().map((error, index) => (
                 <div key={error.id} className="p-3 bg-error-red/10 border border-error-red/20 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className={`px-2 py-1 rounded text-xs font-semibold ${

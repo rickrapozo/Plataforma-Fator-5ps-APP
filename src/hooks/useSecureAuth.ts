@@ -142,18 +142,12 @@ export const useSecureAuth = (options: UseSecureAuthOptions = {}): UseSecureAuth
       setIsLoading(true)
 
       try {
-        // Validar sessão se habilitado (pular para usuários fallback)
+        // Validar sessão se habilitado
         if (options.autoValidateSession && user?.id) {
-          const isFallbackUser = user.id === '00000000-0000-0000-0000-000000000001'
-          if (!isFallbackUser) {
-            const sessionValid = await validateSession()
-            if (!sessionValid) {
-              setIsLoading(false)
-              return
-            }
-          } else {
-            console.log('Usuário em modo fallback, pulando validação inicial de sessão')
-            setIsSessionValid(true)
+          const sessionValid = await validateSession()
+          if (!sessionValid) {
+            setIsLoading(false)
+            return
           }
         }
 

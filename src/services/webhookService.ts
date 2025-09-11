@@ -9,15 +9,106 @@ export interface WebhookResponse {
   timestamp: string
 }
 
+export interface WebhookConfig {
+  url: string
+  timeout: number
+  retries: number
+  environment: 'production' | 'development' | 'local'
+}
+
 export class WebhookService {
   private static instance: WebhookService
   private responseCallbacks: Map<string, (response: WebhookResponse) => void> = new Map()
+  private webhookConfigs: WebhookConfig[] = []
+  private currentConfigIndex: number = 0
+  private failedAttempts: Map<string, number> = new Map()
+
+  private constructor() {
+    this.initializeWebhookConfigs()
+  }
 
   static getInstance(): WebhookService {
     if (!WebhookService.instance) {
       WebhookService.instance = new WebhookService()
     }
     return WebhookService.instance
+  }
+
+  // Inicializa configurações de webhook com fallback
+  private initializeWebhookConfigs() {
+    const productionUrl = import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://fator5ps.app.n8n.cloud/webhook/a95c2946-75d2-4e20-82bf-f04442a5cdbf'
+    const localUrl = import.meta.env.VITE_N8N_LOCAL_WEBHOOK_URL || 'http://localhost:5678/webhook/a95c2946-75d2-4e20-82bf-f04442a5cdbf'
+    const fallbackUrl = import.meta.env.VITE_N8N_FALLBACK_WEBHOOK_URL || 'http://localhost:3001/api/webhook'
+
+    this.webhookConfigs = [
+      {
+        url: productionUrl,
+        timeout: 30000,
+        retries: 2,
+        environment: 'production'
+      },
+      {
+        url: localUrl,
+        timeout: 15000,
+        retries: 1,
+        environment: 'development'
+      },
+      {
+        url: fallbackUrl,
+        timeout: 10000,
+        retries: 1,
+        environment: 'local'
+      }
+    ]
+
+    // Ordena por ambiente (produção primeiro se não estiver em desenvolvimento)
+    if (import.meta.env.PROD) {
+      this.webhookConfigs.sort((a, b) => {
+        const order = { production: 0, development: 1, local: 2 }
+        return order[a.environment] - order[b.environment]
+      })
+    } else {
+      this.webhookConfigs.sort((a, b) => {
+        const order = { development: 0, local: 1, production: 2 }
+        return order[a.environment] - order[b.environment]
+      })
+    }
+
+    console.log('🔧 Configurações de webhook inicializadas:', this.webhookConfigs)
+  }
+
+  // Obtém a URL do webhook atual com fallback inteligente
+  private getWebhookUrl(): string {
+    const config = this.webhookConfigs[this.currentConfigIndex]
+    if (!config) {
+      console.warn('⚠️ Nenhuma configuração de webhook disponível, usando fallback')
+      return 'http://localhost:3001/api/webhook'
+    }
+    return config.url
+  }
+
+  // Tenta próxima configuração em caso de falha
+  private tryNextWebhookConfig(): boolean {
+    this.currentConfigIndex++
+    if (this.currentConfigIndex >= this.webhookConfigs.length) {
+      this.currentConfigIndex = 0
+      return false // Voltou ao início, todas as configurações falharam
+    }
+    console.log(`🔄 Tentando próxima configuração de webhook: ${this.getWebhookUrl()}`)
+    return true
+  }
+
+  // Registra falha para uma configuração específica
+  private recordFailure(url: string) {
+    const failures = this.failedAttempts.get(url) || 0
+    this.failedAttempts.set(url, failures + 1)
+    console.log(`❌ Falha registrada para ${url}: ${failures + 1} tentativas`)
+  }
+
+  // Verifica se uma configuração deve ser evitada temporariamente
+  private shouldSkipConfig(config: WebhookConfig): boolean {
+    const failures = this.failedAttempts.get(config.url) || 0
+    return failures >= config.retries
   }
 
   // Registra callback para receber resposta de uma conversa específica
@@ -88,35 +179,153 @@ export class WebhookService {
     }
   }
 
-  // Faz polling para buscar respostas do webhook server
+  // Faz polling para buscar respostas do webhook server com fallback
   async pollForResponse(conversationId: string): Promise<WebhookResponse | null> {
-    try {
-      const response = await fetch(`http://localhost:3001/api/webhook/poll/${conversationId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
+    let attempts = 0
+    const maxConfigAttempts = this.webhookConfigs.length
+    
+    while (attempts < maxConfigAttempts) {
+      const currentConfig = this.webhookConfigs[this.currentConfigIndex]
       
-      if (!response.ok) {
-        console.log(`⚠️ Polling response não OK: ${response.status} - ${response.statusText}`)
+      // Pula configurações que falharam muito
+      if (this.shouldSkipConfig(currentConfig)) {
+        console.log(`⏭️ Pulando configuração com muitas falhas: ${currentConfig.url}`)
+        if (!this.tryNextWebhookConfig()) {
+          break
+        }
+        attempts++
+        continue
+      }
+
+      try {
+        const webhookUrl = this.getWebhookUrl()
+        const pollUrl = webhookUrl.includes('localhost:3001') 
+          ? `${webhookUrl}/poll/${conversationId}`
+          : `${webhookUrl}?conversationId=${conversationId}&action=poll`
+        
+        console.log(`🔍 Fazendo polling em: ${pollUrl}`)
+        
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), currentConfig.timeout)
+        
+        const response = await fetch(pollUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal
+        })
+        
+        clearTimeout(timeoutId)
+        
+        if (!response.ok) {
+          console.log(`⚠️ Polling response não OK: ${response.status} - ${response.statusText}`)
+          this.recordFailure(webhookUrl)
+          
+          if (!this.tryNextWebhookConfig()) {
+            break
+          }
+          attempts++
+          continue
+        }
+        
+        const result = await response.json()
+        
+        if (result.success && result.data) {
+          console.log('📥 Resposta encontrada via polling:', result.data)
+          // Reset do índice de configuração em caso de sucesso
+          this.currentConfigIndex = 0
+          this.failedAttempts.clear()
+          
+          // Processa a resposta através do sistema de callbacks
+          await this.processWebhookResponse(result.data)
+          return result.data
+        }
+        
         return null
+        
+      } catch (error) {
+        console.error(`❌ Erro no polling com ${currentConfig.url}:`, error)
+        this.recordFailure(currentConfig.url)
+        
+        if (!this.tryNextWebhookConfig()) {
+          break
+        }
+        attempts++
       }
-      
-      const result = await response.json()
-      
-      if (result.success && result.data) {
-        console.log('📥 Resposta encontrada via polling:', result.data)
-        // Processa a resposta através do sistema de callbacks
-        await this.processWebhookResponse(result.data)
-        return result.data
-      }
-      
-      return null
-    } catch (error) {
-      console.error('Erro no polling:', error)
-      return null
     }
+    
+    console.error('❌ Todas as configurações de webhook falharam no polling')
+    return null
+  }
+
+  // Envia dados para o webhook com fallback inteligente
+  async sendToWebhook(data: any): Promise<{ success: boolean; error?: string }> {
+    let attempts = 0
+    const maxConfigAttempts = this.webhookConfigs.length
+    
+    while (attempts < maxConfigAttempts) {
+      const currentConfig = this.webhookConfigs[this.currentConfigIndex]
+      
+      // Pula configurações que falharam muito
+      if (this.shouldSkipConfig(currentConfig)) {
+        console.log(`⏭️ Pulando configuração com muitas falhas: ${currentConfig.url}`)
+        if (!this.tryNextWebhookConfig()) {
+          break
+        }
+        attempts++
+        continue
+      }
+
+      try {
+        const webhookUrl = this.getWebhookUrl()
+        console.log(`📤 Enviando dados para webhook: ${webhookUrl}`)
+        
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), currentConfig.timeout)
+        
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+          signal: controller.signal
+        })
+        
+        clearTimeout(timeoutId)
+        
+        if (!response.ok) {
+          console.log(`⚠️ Webhook response não OK: ${response.status} - ${response.statusText}`)
+          this.recordFailure(webhookUrl)
+          
+          if (!this.tryNextWebhookConfig()) {
+            break
+          }
+          attempts++
+          continue
+        }
+        
+        console.log('✅ Dados enviados com sucesso para o webhook')
+        // Reset do índice de configuração em caso de sucesso
+        this.currentConfigIndex = 0
+        this.failedAttempts.clear()
+        
+        return { success: true }
+        
+      } catch (error) {
+        console.error(`❌ Erro ao enviar para webhook ${currentConfig.url}:`, error)
+        this.recordFailure(currentConfig.url)
+        
+        if (!this.tryNextWebhookConfig()) {
+          break
+        }
+        attempts++
+      }
+    }
+    
+    console.error('❌ Todas as configurações de webhook falharam no envio')
+    return { success: false, error: 'Todas as configurações de webhook falharam' }
   }
 
   // Inicia polling para uma conversa específica
