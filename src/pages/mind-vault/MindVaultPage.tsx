@@ -4,17 +4,30 @@ import { Search, Play, Crown, Star, Loader, RefreshCw, Music, Headphones } from 
 import AudioPlayer from '../../components/audio/AudioPlayer'
 import AudioCard from '../../components/audio/AudioCard'
 import { AudioTrack } from '../../services/audioIntegrationService';
-import { audioLibrary, categories, getAudiosByCategory, searchAudios } from '../../data/audioLibrary';
+import { audioLibrary, categories, getAudiosByCategory, searchAudios, AudioTrack as LibraryAudioTrack } from '../../data/audioLibrary';
 
 const MindVaultPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Todos')
-  const [filteredAudios, setFilteredAudios] = useState<AudioTrack[]>(audioLibrary)
+  const [filteredAudios, setFilteredAudios] = useState<AudioTrack[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [currentTrack, setCurrentTrack] = useState<AudioTrack | null>(null)
   const [playlist, setPlaylist] = useState<AudioTrack[]>([])
   const [showPlayer, setShowPlayer] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Converter LibraryAudioTrack para AudioTrack
+  const convertToAudioTrack = (libraryTrack: LibraryAudioTrack): AudioTrack => ({
+    id: libraryTrack.id,
+    title: libraryTrack.title,
+    description: libraryTrack.description,
+    duration: libraryTrack.duration,
+    thumbnail: libraryTrack.thumbnail,
+    source: libraryTrack.youtubeUrl ? 'youtube' as const : 'spotify' as const,
+    url: libraryTrack.youtubeUrl || libraryTrack.spotifyUrl || '',
+    category: libraryTrack.category,
+    tags: libraryTrack.tags
+  })
 
   // Carregar áudios automaticamente por categoria
   useEffect(() => {
@@ -25,7 +38,8 @@ const MindVaultPage: React.FC = () => {
   useEffect(() => {
     if (searchTerm.trim()) {
       const searchResults = searchAudios(searchTerm)
-      setFilteredAudios(searchResults)
+      const convertedResults = searchResults.map(convertToAudioTrack)
+      setFilteredAudios(convertedResults)
     } else {
       loadAudiosByCategory(selectedCategory)
     }
@@ -37,7 +51,8 @@ const MindVaultPage: React.FC = () => {
     
     try {
       const audios = getAudiosByCategory(category)
-      setFilteredAudios(audios)
+      const convertedAudios = audios.map(convertToAudioTrack)
+      setFilteredAudios(convertedAudios)
     } catch (err) {
       console.error('Erro ao carregar áudios:', err)
       setError('Erro ao carregar áudios da biblioteca.')
@@ -58,7 +73,8 @@ const MindVaultPage: React.FC = () => {
     
     try {
       const searchResults = searchAudios(searchTerm)
-      setFilteredAudios(searchResults)
+      const convertedResults = searchResults.map(convertToAudioTrack)
+      setFilteredAudios(convertedResults)
     } catch (err) {
       console.error('Erro na busca:', err)
       setError('Erro na busca.')
@@ -198,7 +214,7 @@ const MindVaultPage: React.FC = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => loadAudiosByCategory(currentCategory)}
+            onClick={() => loadAudiosByCategory(selectedCategory)}
             className="mt-2 mx-auto block px-4 py-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-colors"
           >
             Tentar Novamente

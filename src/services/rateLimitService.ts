@@ -243,7 +243,7 @@ export class RateLimitService {
   }
 
   // Métodos privados para interação com banco de dados
-  private async getFromDatabase(key: string, windowStart: number): Promise<RateLimitEntry | null> {
+  private async getFromDatabase(key: string, windowStart: number): Promise<RateLimitEntry | undefined> {
     try {
       const { data, error } = await supabase
         .from('rate_limits')
@@ -252,7 +252,7 @@ export class RateLimitService {
         .gte('reset_time', Date.now())
         .single()
 
-      if (error || !data) return null
+      if (error || !data) return undefined
 
       return {
         count: data.count,
@@ -261,7 +261,7 @@ export class RateLimitService {
       }
     } catch (error) {
       console.error('Erro ao buscar do banco:', error)
-      return null
+      return undefined
     }
   }
 

@@ -27,7 +27,14 @@ interface SecurityEvent {
 
 class SecurityService {
   private rateLimitMap = new Map<string, RateLimitEntry>()
-  private securityConfig: SecurityConfig
+  private securityConfig: SecurityConfig = {
+    jwtSecret: process.env.JWT_SECRET || 'default-secret-key',
+    sessionTimeout: 86400,
+    passwordMinLength: 8,
+    twoFactorEnabled: false,
+    rateLimitPerMinute: 100,
+    apiTimeout: 30000
+  }
 
   constructor() {
     this.initializeSecurityConfig()

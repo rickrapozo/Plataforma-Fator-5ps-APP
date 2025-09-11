@@ -98,7 +98,7 @@ const AdminPanelPage: React.FC = () => {
     },
     {
       label: 'Visualizações',
-      value: (metrics.current?.page_views || 0).toString(),
+      value: (metrics.current?.totalSessions || 0).toString(),
       change: '+8%',
       icon: Eye,
       color: 'text-royal-gold'
@@ -597,11 +597,11 @@ const AdminPanelPage: React.FC = () => {
                     </div>
                     <div className="bg-white/5 rounded-lg p-4">
                       <p className="text-pearl-white/60 text-sm">CPU</p>
-                      <p className="text-white font-semibold">{(metrics.current?.cpu_usage || 0).toFixed(1)}%</p>
+                      <p className="text-white font-semibold">{(metrics.current?.cpuUsage || 0).toFixed(1)}%</p>
                     </div>
                     <div className="bg-white/5 rounded-lg p-4">
                       <p className="text-pearl-white/60 text-sm">Memória</p>
-                      <p className="text-white font-semibold">{(metrics.current?.memory_usage || 0).toFixed(1)}%</p>
+                      <p className="text-white font-semibold">{(metrics.current?.memoryUsage || 0).toFixed(1)}%</p>
                     </div>
                   </div>
                 </div>

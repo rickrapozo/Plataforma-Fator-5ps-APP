@@ -33,7 +33,7 @@ const navItems: NavItem[] = [
 
 const HamburgerMenu: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
-  const { user, hasActivePlan } = useAppStore()
+  const { user } = useAppStore()
 
   const toggleMenu = () => {
     setIsOpen(!isOpen)
@@ -126,7 +126,7 @@ const HamburgerMenu: React.FC = () => {
                 {navItems.map((item, index) => {
                   const Icon = item.icon
                   const isPremium = item.premium
-                  const isLocked = isPremium && !hasActivePlan
+                  const isLocked = isPremium && user?.subscription !== 'prosperous'
 
                   return (
                     <motion.div

@@ -121,14 +121,33 @@ const DailyJourney: React.FC<DailyJourneyProps> = ({ className = '' }) => {
       
       try {
         const journey = await geminiService.generateDailyJourney({
-          userName: user?.name || 'Usuário',
-          currentProgress: dailyProtocol,
-          streak,
-          xp,
-          timeOfDay: new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'
+          currentAlignment: {
+            pensamento: dailyProtocol.p1_affirmations.length > 0 ? 0.8 : 0.3,
+            sentimento: dailyProtocol.p2_feeling ? 0.8 : 0.3,
+            emocao: dailyProtocol.p3_peak_state_completed ? 0.8 : 0.3,
+            acao: dailyProtocol.p4_completed ? 0.8 : 0.3,
+            resultado: (dailyProtocol.p5_victory && dailyProtocol.p5_gratitude) ? 0.8 : 0.3
+          },
+          goals: ['Desenvolver os 5 Pilares', 'Manter consistência diária'],
+          challenges: ['Manter foco', 'Gerenciar tempo'],
+          preferences: { timeOfDay: new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening' },
+          availableTime: 30
         })
         
-        setJourneySteps(journey.steps)
+        // Converter os steps do Gemini para o formato JourneyStep
+        const convertedSteps: JourneyStep[] = journey.steps.map((step, index) => ({
+          id: `step-${index}`,
+          pillar: index % 5 === 0 ? 'pensamento' : index % 5 === 1 ? 'sentimento' : index % 5 === 2 ? 'emocao' : index % 5 === 3 ? 'acao' : 'resultado',
+          title: step.title,
+          description: step.description,
+          estimatedTime: step.duration,
+          priority: 'medium' as const,
+          completed: false,
+          action: step.description,
+          benefits: ['Melhora bem-estar', 'Desenvolve habilidades', 'Aumenta consciência']
+        }))
+        
+        setJourneySteps(convertedSteps)
       } catch (error) {
         console.error('Erro ao gerar jornada diária:', error)
         

@@ -110,14 +110,33 @@ const FivePsPanel: React.FC<FivePsPanelProps> = ({ className = '' }) => {
       
       try {
         const analysis = await geminiService.analyze5PsPillars({
-          dailyProtocol,
-          streak,
-          xp,
-          userName: user?.name || 'Usuário'
+          p1_thoughts: dailyProtocol.p1_affirmations || [],
+          p2_feelings: dailyProtocol.p2_feeling ? [dailyProtocol.p2_feeling] : [],
+          p3_emotions: dailyProtocol.p3_peak_state_completed ? ['peak_state_activated'] : [],
+          p4_actions: dailyProtocol.p4_completed ? ['daily_action_completed'] : [],
+          p5_results: [
+            ...(dailyProtocol.p5_victory ? [dailyProtocol.p5_victory] : []),
+            ...(dailyProtocol.p5_gratitude ? [dailyProtocol.p5_gratitude] : [])
+          ],
+          recentActivity: { streak, xp, lastUpdate: new Date().toISOString() }
         })
         
-        setInsights(analysis.pillars)
-        setOverallAlignment(analysis.overallAlignment)
+        // Converter insights de string[] para PillarInsight[]
+        const convertedInsights: PillarInsight[] = analysis.insights.map((insight, index) => ({
+          pillar: `P${index + 1}`,
+          status: 'good' as const,
+          score: 75,
+          insight: insight,
+          suggestion: 'Continue mantendo o foco neste pilar.',
+          trend: 'stable' as const
+        }))
+        setInsights(convertedInsights)
+        // Calcular média do alinhamento dos pilares
+        const alignmentValues = Object.values(analysis.alignment)
+        const averageAlignment = alignmentValues.length > 0 
+          ? alignmentValues.reduce((sum, val) => sum + val, 0) / alignmentValues.length
+          : 0
+        setOverallAlignment(averageAlignment)
       } catch (error) {
         console.error('Erro ao analisar pilares:', error)
         // Fallback com análise básica

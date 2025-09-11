@@ -9,7 +9,7 @@ import { paymentService } from '../../services/paymentService'
 const SubscriptionSuccessPage: React.FC = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { user, refreshUser } = useAppStore()
+  const { user, loadUserData } = useAppStore()
   const [loading, setLoading] = useState(true)
   const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null)
 
@@ -27,7 +27,7 @@ const SubscriptionSuccessPage: React.FC = () => {
         await new Promise(resolve => setTimeout(resolve, 2000))
         
         // Atualiza dados do usuário
-        await refreshUser()
+        await loadUserData()
         
         // Obtém status da assinatura
         const status = await paymentService.getSubscriptionStatus(user.id)
@@ -43,7 +43,7 @@ const SubscriptionSuccessPage: React.FC = () => {
     }
 
     verifyPayment()
-  }, [sessionId, user, refreshUser])
+  }, [sessionId, user, loadUserData])
 
   if (loading) {
     return (

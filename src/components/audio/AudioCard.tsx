@@ -38,7 +38,7 @@ const AudioCard: React.FC<AudioCardProps> = ({ audio, onPlay, isPlaying = false 
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -5, scale: 1.02 }}
       transition={{ duration: 0.3 }}
-      className={`relative group bg-gradient-to-br ${getMoodColor(audio.mood)} backdrop-blur-sm border rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300`}
+      className={`relative group bg-gradient-to-br ${getMoodColor(audio.category)} backdrop-blur-sm border rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300`}
     >
       {/* Thumbnail com overlay */}
       <div className="relative h-48 overflow-hidden">
@@ -57,8 +57,8 @@ const AudioCard: React.FC<AudioCardProps> = ({ audio, onPlay, isPlaying = false 
         
         {/* Mood indicator */}
         <div className="absolute top-3 left-3 bg-black/40 backdrop-blur-sm rounded-full px-2 py-1 text-xs text-white flex items-center gap-1">
-          <span>{getMoodIcon(audio.mood)}</span>
-          <span className="capitalize">{audio.mood}</span>
+          <span>{getMoodIcon(audio.category)}</span>
+          <span className="capitalize">{audio.category}</span>
         </div>
         
         {/* Play button */}
@@ -90,7 +90,7 @@ const AudioCard: React.FC<AudioCardProps> = ({ audio, onPlay, isPlaying = false 
             {audio.title}
           </h3>
           <p className="text-pearl-white/70 text-sm">
-            {audio.artist}
+            {audio.source || 'Artista Desconhecido'}
           </p>
         </div>
         
@@ -120,31 +120,27 @@ const AudioCard: React.FC<AudioCardProps> = ({ audio, onPlay, isPlaying = false 
         {/* Footer with external links */}
         <div className="flex items-center justify-between pt-2 border-t border-white/10">
           <div className="flex items-center gap-2">
-            {audio.youtubeUrl && (
-              <motion.a
-                href={audio.youtubeUrl}
+            {audio.url && audio.source === 'youtube' && (
+              <a
+                href={audio.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
                 className="w-8 h-8 bg-red-500/20 hover:bg-red-500/30 rounded-full flex items-center justify-center text-red-400 hover:text-red-300 transition-colors"
                 title="Abrir no YouTube"
               >
                 <ExternalLink className="w-4 h-4" />
-              </motion.a>
+              </a>
             )}
-            {audio.spotifyUrl && (
-              <motion.a
-                href={audio.spotifyUrl}
+            {audio.url && audio.source === 'spotify' && (
+              <a
+                href={audio.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
                 className="w-8 h-8 bg-green-500/20 hover:bg-green-500/30 rounded-full flex items-center justify-center text-green-400 hover:text-green-300 transition-colors"
                 title="Abrir no Spotify"
               >
                 <ExternalLink className="w-4 h-4" />
-              </motion.a>
+               </a>
             )}
           </div>
           

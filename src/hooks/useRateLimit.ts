@@ -89,7 +89,7 @@ export function useRateLimit(options: UseRateLimitOptions = {}) {
 
       // Toast de aviso quando restam poucas requisições
       if (result.allowed && result.remaining <= 5 && result.remaining > 0 && showToast) {
-        toast.warning(
+        toast(
           `Restam apenas ${result.remaining} requisições nesta sessão.`,
           {
             duration: 3000,

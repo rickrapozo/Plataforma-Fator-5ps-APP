@@ -195,7 +195,7 @@ class AuthMiddleware {
   }
 
   // Middleware para validação de senha
-  validatePassword(password: string): { valid: boolean; errors: string[] } {
+  validatePassword(password: string): { isValid: boolean; errors: string[] } {
     return securityService.validatePasswordStrength(password)
   }
 

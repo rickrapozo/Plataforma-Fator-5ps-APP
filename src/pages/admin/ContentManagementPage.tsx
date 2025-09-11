@@ -58,6 +58,25 @@ const ContentManagementPage: React.FC = () => {
   const navigate = useNavigate()
   const { isLoading: authLoading, isAuthorized, error: authError, logAction } = useAdminAuth()
   const [contents, setContents] = useState<Content[]>([])
+
+  // Função para converter ContentMetrics para Content
+  const convertToContent = (metrics: any): Content => ({
+    id: metrics.id,
+    title: metrics.title,
+    type: metrics.type as 'journey' | 'audio' | 'template' | 'article' | 'video',
+    status: metrics.status as 'published' | 'draft' | 'archived' | 'scheduled',
+    author: metrics.author,
+    createdAt: metrics.createdAt,
+    updatedAt: metrics.updatedAt,
+    publishedAt: metrics.publishedAt,
+    views: metrics.views,
+    likes: metrics.likes,
+    rating: metrics.rating,
+    category: metrics.category,
+    duration: metrics.duration,
+    tags: metrics.tags || [],
+    description: metrics.description || ''
+  })
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
@@ -76,7 +95,8 @@ const ContentManagementPage: React.FC = () => {
       try {
         await logAction('access_content_management', { page: 'ContentManagementPage' })
         const contentData = await dataService.getContentMetrics()
-        setContents(contentData)
+        const convertedContents = contentData.map(convertToContent)
+        setContents(convertedContents)
       } catch (error) {
         console.error('Erro ao carregar conteúdos:', error)
         // Fallback to mock data if needed

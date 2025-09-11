@@ -38,6 +38,9 @@ export interface BaseUser {
   createdAt: ISOTimestamp
   updatedAt: ISOTimestamp
   status: EntityStatus
+  isAdmin?: boolean
+  role?: 'user' | 'admin' | 'super_admin'
+  permissions?: string[]
 }
 
 /**
@@ -439,6 +442,9 @@ export interface SystemMetrics {
   responseTime: number
   memoryUsage: number
   cpuUsage: number
+  page_views: number
+  memory_usage: number
+  cpu_usage: number
 }
 
 // === API INTERFACES ===
@@ -565,6 +571,41 @@ export interface ValidationError {
   field: string
   message: string
   value: any
+}
+
+// === APP STATE INTERFACES ===
+
+/**
+ * Estado da aplicação
+ */
+export interface AppState {
+  user: BaseUser | null
+  isAuthenticated: boolean
+  hasCompletedOnboarding: boolean
+  hasActivePlan: boolean
+  theme: 'light' | 'dark'
+  notifications: any[]
+  loading: boolean
+}
+
+// === AUDIO INTERFACES ===
+
+/**
+ * Interface para faixas de áudio
+ */
+export interface AudioTrack {
+  id: string
+  title: string
+  artist: string
+  description: string
+  duration: string
+  category: string
+  youtubeUrl?: string
+  spotifyUrl?: string
+  thumbnail: string
+  tags: string[]
+  mood: 'relaxing' | 'energizing' | 'focused' | 'peaceful' | 'inspiring'
+  source?: 'youtube' | 'spotify' | 'local'
 }
 
 // === EXPORT ALL ===

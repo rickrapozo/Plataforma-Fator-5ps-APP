@@ -300,7 +300,7 @@ export const useAppStore = create<AppState>()(
             id: 'demo-user-id',
             email: 'demo@essentialfactor.com',
             name: 'Usuário Demo',
-            avatar_url: null,
+            avatar_url: undefined,
             subscription: 'essential' as const,
             subscription_status: 'active' as const,
             role: 'user' as const,

@@ -5,7 +5,7 @@
 
 import '@testing-library/jest-dom'
 import { TextEncoder, TextDecoder } from 'util'
-import { vi } from 'vitest'
+import { vi, beforeAll, afterAll, afterEach } from 'vitest'
 import React from 'react'
 
 // Polyfills para Node.js

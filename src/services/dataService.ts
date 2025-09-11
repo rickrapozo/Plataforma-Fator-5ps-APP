@@ -149,7 +149,7 @@ class DataService {
         joinDate: user.created_at,
         subscription: user.subscription || 'essential',
         totalSessions: user.daily_protocols?.length || 0,
-        completedJourneys: user.journey_progress?.filter(jp => jp.completed_at).length || 0
+        completedJourneys: user.journey_progress?.filter((jp: any) => jp.completed_at).length || 0
       }))
     } catch (error) {
       console.error('Erro ao buscar usuários:', error)
