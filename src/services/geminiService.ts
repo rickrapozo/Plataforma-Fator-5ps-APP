@@ -6,6 +6,11 @@ interface GeminiResponse {
       }[]
     }
   }[]
+  error?: {
+    code: number
+    message: string
+    status: string
+  }
 }
 
 interface AnalysisRequest {
@@ -22,26 +27,97 @@ interface AnalysisResult {
   confidence: number
 }
 
+interface RequestConfig {
+  maxRetries: number
+  retryDelay: number
+  timeout: number
+  rateLimit: {
+    requests: number
+    window: number // em milissegundos
+  }
+}
+
+interface ResponseProcessingOptions {
+  contextType?: 'crisis' | 'general' | 'analysis' | 'conversation'
+  emotionalTone?: 'supportive' | 'professional' | 'casual' | 'empathetic'
+  responseLength?: 'brief' | 'moderate' | 'detailed'
+  includeActionItems?: boolean
+  personalizeFor?: string
+  filterContent?: boolean
+}
+
+interface ProcessedResponse {
+  content: string
+  metadata: {
+    originalLength: number
+    processedLength: number
+    emotionalTone: string
+    confidence: number
+    processingTime: number
+    suggestions?: string[]
+    actionItems?: string[]
+  }
+}
+
+interface ConnectionStatus {
+  isConnected: boolean
+  lastCheck: Date
+  responseTime: number
+  errorCount: number
+  rateLimitRemaining: number
+}
+
 class GeminiService {
   private static instance: GeminiService
   private readonly apiKey: string
   private readonly baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
+  private readonly config: RequestConfig
+  private connectionStatus: ConnectionStatus
+  private requestHistory: Date[] = []
+  private lastHealthCheck: Date = new Date(0)
+  private healthCheckInterval = 5 * 60 * 1000 // 5 minutos
+  private responseCache: Map<string, { response: string; timestamp: Date; ttl: number }> = new Map()
+  private contextHistory: Array<{ prompt: string; response: string; timestamp: Date; context?: string }> = []
+  private maxContextHistory = 10
+  private cacheDefaultTTL = 5 * 60 * 1000 // 5 minutos
 
   constructor() {
+    // Configuração padrão
+    this.config = {
+      maxRetries: 3,
+      retryDelay: 1000,
+      timeout: 30000,
+      rateLimit: {
+        requests: 60,
+        window: 60000 // 1 minuto
+      }
+    }
+
+    // Status inicial da conexão
+    this.connectionStatus = {
+      isConnected: false,
+      lastCheck: new Date(),
+      responseTime: 0,
+      errorCount: 0,
+      rateLimitRemaining: this.config.rateLimit.requests
+    }
+
     // Obter a chave da API das variáveis de ambiente
-    this.apiKey = process.env.VITE_GEMINI_API_KEY || ''
+    this.apiKey = import.meta.env.VITE_GEMINI_API_KEY || ''
     
     if (!this.apiKey) {
       console.warn('AVISO: Chave da API do Gemini não configurada. Defina VITE_GEMINI_API_KEY nas variáveis de ambiente.')
-      // Não lançar erro para permitir que a aplicação continue funcionando
       return
     }
     
     // Validar formato básico da chave
-    if (!this.apiKey.startsWith('AIza')) {
+    if (!this.validateApiKey(this.apiKey)) {
       console.warn('AVISO: Formato inválido da chave da API do Gemini')
-      this.apiKey = '' // Limpar chave inválida
+      return
     }
+
+    // Inicializar verificação de saúde
+    this.initializeHealthCheck()
   }
 
   static getInstance(): GeminiService {
@@ -51,37 +127,196 @@ class GeminiService {
     return GeminiService.instance
   }
 
-  async makeRequest(prompt: string): Promise<string> {
-    if (!this.apiKey) {
-      throw new Error('Gemini API key not available')
-    }
+  private validateApiKey(key: string): boolean {
+    return key.startsWith('AIza') && key.length > 20
+  }
 
+  private initializeHealthCheck(): void {
+    // Executar verificação inicial
+    this.performHealthCheck()
+    
+    // Configurar verificações periódicas
+    setInterval(() => {
+      this.performHealthCheck()
+    }, this.healthCheckInterval)
+  }
+
+  private async performHealthCheck(): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }]
-        })
-      })
-
-      if (!response.ok) {
-        console.warn(`Gemini API error: ${response.status} - ${response.statusText}`)
-        throw new Error(`Gemini API error: ${response.status}`)
+      const startTime = Date.now()
+      const isHealthy = await this.testConnection()
+      const responseTime = Date.now() - startTime
+      
+      this.connectionStatus = {
+        ...this.connectionStatus,
+        isConnected: isHealthy,
+        lastCheck: new Date(),
+        responseTime,
+        errorCount: isHealthy ? 0 : this.connectionStatus.errorCount + 1
       }
-
-      const data: GeminiResponse = await response.json()
-      return data.candidates[0]?.content?.parts[0]?.text || 'Sem resposta disponível'
+      
+      this.lastHealthCheck = new Date()
     } catch (error) {
-      console.error('Erro na requisição Gemini:', error)
-      throw error
+      this.connectionStatus.errorCount++
+      console.error('Health check failed:', error)
     }
+  }
+
+  private checkRateLimit(): boolean {
+    const now = new Date()
+    const windowStart = new Date(now.getTime() - this.config.rateLimit.window)
+    
+    // Limpar requisições antigas
+    this.requestHistory = this.requestHistory.filter(date => date > windowStart)
+    
+    // Verificar se ainda há limite disponível
+    const remaining = this.config.rateLimit.requests - this.requestHistory.length
+    this.connectionStatus.rateLimitRemaining = remaining
+    
+    return remaining > 0
+  }
+
+  private recordRequest(): void {
+    this.requestHistory.push(new Date())
+  }
+
+  private async sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
+  async makeRequest(prompt: string, options?: { priority?: 'low' | 'normal' | 'high' }): Promise<string> {
+    if (!this.apiKey) {
+      throw new Error('Gemini API key not configured. Please set VITE_GEMINI_API_KEY environment variable.')
+    }
+
+    // Verificar rate limiting
+    if (!this.checkRateLimit()) {
+      throw new Error('Rate limit exceeded. Please try again later.')
+    }
+
+    // Verificar se a conexão está saudável
+    if (!this.connectionStatus.isConnected && this.connectionStatus.errorCount > 3) {
+      throw new Error('Gemini API is currently unavailable. Please try again later.')
+    }
+
+    let lastError: Error | null = null
+    
+    for (let attempt = 1; attempt <= this.config.maxRetries; attempt++) {
+      try {
+        this.recordRequest()
+        const startTime = Date.now()
+        
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), this.config.timeout)
+        
+        const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': 'Essential-Factor-5P/1.0'
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: prompt
+              }]
+            }],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 2048
+            },
+            safetySettings: [
+              {
+                category: 'HARM_CATEGORY_HARASSMENT',
+                threshold: 'BLOCK_MEDIUM_AND_ABOVE'
+              },
+              {
+                category: 'HARM_CATEGORY_HATE_SPEECH',
+                threshold: 'BLOCK_MEDIUM_AND_ABOVE'
+              }
+            ]
+          }),
+          signal: controller.signal
+        })
+        
+        clearTimeout(timeoutId)
+        const responseTime = Date.now() - startTime
+        
+        // Atualizar métricas de conexão
+        this.connectionStatus.responseTime = responseTime
+        this.connectionStatus.isConnected = true
+        this.connectionStatus.errorCount = 0
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+          
+          try {
+            const errorData = JSON.parse(errorText)
+            if (errorData.error?.message) {
+              errorMessage = errorData.error.message
+            }
+          } catch {
+            // Manter mensagem de erro padrão
+          }
+          
+          // Verificar se é um erro recuperável
+          if (response.status >= 500 || response.status === 429) {
+            throw new Error(`Recoverable error: ${errorMessage}`)
+          } else {
+            throw new Error(`API error: ${errorMessage}`)
+          }
+        }
+
+        const data: GeminiResponse = await response.json()
+        
+        if (data.error) {
+          throw new Error(`Gemini API error: ${data.error.message}`)
+        }
+        
+        const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text
+        
+        if (!responseText) {
+          throw new Error('Empty response from Gemini API')
+        }
+        
+        return responseText.trim()
+        
+      } catch (error) {
+        lastError = error as Error
+        this.connectionStatus.errorCount++
+        
+        console.warn(`Gemini API attempt ${attempt}/${this.config.maxRetries} failed:`, error)
+        
+        // Se não é o último attempt e o erro é recuperável, tentar novamente
+        if (attempt < this.config.maxRetries && this.isRecoverableError(error as Error)) {
+          const delay = this.config.retryDelay * Math.pow(2, attempt - 1) // Exponential backoff
+          console.log(`Retrying in ${delay}ms...`)
+          await this.sleep(delay)
+          continue
+        }
+        
+        // Se chegou aqui, não vai tentar novamente
+        break
+      }
+    }
+    
+    // Se chegou aqui, todas as tentativas falharam
+    this.connectionStatus.isConnected = false
+    throw new Error(`Gemini API request failed after ${this.config.maxRetries} attempts: ${lastError?.message}`)
+  }
+  
+  private isRecoverableError(error: Error): boolean {
+    const message = error.message.toLowerCase()
+    return message.includes('timeout') || 
+           message.includes('network') ||
+           message.includes('recoverable') ||
+           message.includes('rate limit') ||
+           message.includes('503') ||
+           message.includes('502') ||
+           message.includes('500')
   }
 
   async analyzeUserBehavior(userData: any[]): Promise<AnalysisResult> {
@@ -380,7 +615,7 @@ class GeminiService {
 
   async generateDynamicGreeting(userData: {
     name: string
-    timeOfDay: 'morning' | 'afternoon' | 'evening'
+    timeOfDay: 'dawn' | 'morning' | 'afternoon' | 'evening'
     streak: number
     lastActivity: string
     recentProgress: any
@@ -415,6 +650,7 @@ class GeminiService {
       // Fallback para saudações padrão
       const { timeOfDay, name, streak } = userData
       const greetings = {
+        dawn: `Boa madrugada, ${name}! Que a serenidade da madrugada inspire sua jornada de transformação.`,
         morning: `Bom dia, ${name}! Pronto para alinhar sua mente e criar um dia próspero?`,
         afternoon: `Olá, ${name}! Como está a energia dos seus 5Ps? Vamos recalibrar para uma tarde produtiva.`,
         evening: `Boa noite, ${name}! É hora de refletir sobre suas conquistas e preparar sua mente para um descanso poderoso.`
@@ -600,7 +836,7 @@ class GeminiService {
   }
 
   async generateMotivationalQuote(context?: {
-    timeOfDay?: 'morning' | 'afternoon' | 'evening'
+    timeOfDay?: 'dawn' | 'morning' | 'afternoon' | 'evening'
     userMood?: string
     currentGoals?: string[]
     recentAchievements?: string[]
@@ -721,8 +957,399 @@ class GeminiService {
       return false
     }
   }
+
+  getConnectionStatus(): ConnectionStatus {
+    return { ...this.connectionStatus }
+  }
+
+  getConfiguration(): RequestConfig {
+    return { ...this.config }
+  }
+
+  isHealthy(): boolean {
+    const now = new Date()
+    const timeSinceLastCheck = now.getTime() - this.lastHealthCheck.getTime()
+    
+    return this.connectionStatus.isConnected && 
+           this.connectionStatus.errorCount < 3 &&
+           timeSinceLastCheck < this.healthCheckInterval * 2
+  }
+
+  async forceHealthCheck(): Promise<ConnectionStatus> {
+    await this.performHealthCheck()
+    return this.getConnectionStatus()
+  }
+
+  getRateLimitStatus(): {
+    remaining: number
+    resetTime: Date
+    requestsInWindow: number
+  } {
+    const now = new Date()
+    const windowStart = new Date(now.getTime() - this.config.rateLimit.window)
+    const requestsInWindow = this.requestHistory.filter(date => date > windowStart).length
+    const remaining = Math.max(0, this.config.rateLimit.requests - requestsInWindow)
+    const resetTime = new Date(windowStart.getTime() + this.config.rateLimit.window)
+    
+    return {
+      remaining,
+      resetTime,
+      requestsInWindow
+    }
+  }
+
+  // Métodos de processamento inteligente de respostas
+  async makeIntelligentRequest(
+    prompt: string, 
+    options: ResponseProcessingOptions = {}
+  ): Promise<ProcessedResponse> {
+    const startTime = Date.now()
+    
+    // Verificar cache primeiro
+    const cacheKey = this.generateCacheKey(prompt, options)
+    const cachedResponse = this.getCachedResponse(cacheKey)
+    if (cachedResponse) {
+      return {
+        content: cachedResponse,
+        metadata: {
+          originalLength: cachedResponse.length,
+          processedLength: cachedResponse.length,
+          emotionalTone: options.emotionalTone || 'professional',
+          confidence: 0.95,
+          processingTime: Date.now() - startTime,
+          suggestions: ['Resposta obtida do cache']
+        }
+      }
+    }
+
+    // Enriquecer prompt com contexto
+    const enrichedPrompt = this.enrichPromptWithContext(prompt, options)
+    
+    try {
+      // Fazer requisição à API
+      const rawResponse = await this.makeRequest(enrichedPrompt)
+      
+      // Processar resposta inteligentemente
+      const processedResponse = await this.processResponse(rawResponse, options)
+      
+      // Armazenar no cache e histórico
+      this.cacheResponse(cacheKey, processedResponse.content)
+      this.addToContextHistory(prompt, processedResponse.content, options.contextType)
+      
+      processedResponse.metadata.processingTime = Date.now() - startTime
+      
+      return processedResponse
+      
+    } catch (error) {
+      console.error('Erro na requisição inteligente:', error)
+      
+      // Retornar resposta de fallback processada
+      const fallbackContent = this.generateFallbackResponse(options)
+      return {
+        content: fallbackContent,
+        metadata: {
+          originalLength: fallbackContent.length,
+          processedLength: fallbackContent.length,
+          emotionalTone: options.emotionalTone || 'supportive',
+          confidence: 0.3,
+          processingTime: Date.now() - startTime,
+          suggestions: ['Resposta de fallback devido a erro na API']
+        }
+      }
+    }
+  }
+
+  private enrichPromptWithContext(prompt: string, options: ResponseProcessingOptions): string {
+    let enrichedPrompt = prompt
+    
+    // Adicionar contexto baseado no tipo
+    if (options.contextType) {
+      const contextInstructions = {
+        crisis: 'CONTEXTO: Esta é uma situação de crise emocional. Responda com empatia, suporte e orientações práticas. Priorize a segurança e bem-estar.',
+        general: 'CONTEXTO: Resposta geral para usuário da plataforma de desenvolvimento pessoal.',
+        analysis: 'CONTEXTO: Análise técnica ou de dados. Seja preciso, objetivo e baseado em evidências.',
+        conversation: 'CONTEXTO: Conversa natural e fluida. Mantenha tom conversacional e engajante.'
+      }
+      
+      enrichedPrompt = `${contextInstructions[options.contextType]}\n\n${enrichedPrompt}`
+    }
+    
+    // Adicionar tom emocional
+    if (options.emotionalTone) {
+      const toneInstructions = {
+        supportive: 'TOM: Seja encorajador, positivo e oferece suporte emocional.',
+        professional: 'TOM: Mantenha linguagem profissional, clara e objetiva.',
+        casual: 'TOM: Use linguagem casual, amigável e descontraída.',
+        empathetic: 'TOM: Demonstre empatia profunda, compreensão e validação emocional.'
+      }
+      
+      enrichedPrompt = `${toneInstructions[options.emotionalTone]}\n\n${enrichedPrompt}`
+    }
+    
+    // Adicionar instruções de tamanho
+    if (options.responseLength) {
+      const lengthInstructions = {
+        brief: 'TAMANHO: Resposta concisa, máximo 100 palavras.',
+        moderate: 'TAMANHO: Resposta moderada, entre 100-300 palavras.',
+        detailed: 'TAMANHO: Resposta detalhada, pode usar até 500 palavras se necessário.'
+      }
+      
+      enrichedPrompt = `${lengthInstructions[options.responseLength]}\n\n${enrichedPrompt}`
+    }
+    
+    // Adicionar histórico de contexto relevante
+    const relevantContext = this.getRelevantContext(prompt)
+    if (relevantContext.length > 0) {
+      const contextSummary = relevantContext
+        .slice(-3) // Últimas 3 interações
+        .map(ctx => `Anterior: "${ctx.prompt.substring(0, 50)}..." -> "${ctx.response.substring(0, 50)}..."`)
+        .join('\n')
+      
+      enrichedPrompt = `HISTÓRICO RECENTE:\n${contextSummary}\n\nNOVA SOLICITAÇÃO:\n${enrichedPrompt}`
+    }
+    
+    return enrichedPrompt
+  }
+
+  private async processResponse(rawResponse: string, options: ResponseProcessingOptions): Promise<ProcessedResponse> {
+    let processedContent = rawResponse.trim()
+    const originalLength = processedContent.length
+    const suggestions: string[] = []
+    const actionItems: string[] = []
+    
+    // Filtrar conteúdo se solicitado
+    if (options.filterContent) {
+      processedContent = this.filterInappropriateContent(processedContent)
+    }
+    
+    // Extrair itens de ação se solicitado
+    if (options.includeActionItems) {
+      const extractedActions = this.extractActionItems(processedContent)
+      actionItems.push(...extractedActions)
+    }
+    
+    // Personalizar para usuário específico
+    if (options.personalizeFor) {
+      processedContent = this.personalizeResponse(processedContent, options.personalizeFor)
+      suggestions.push('Resposta personalizada para o usuário')
+    }
+    
+    // Ajustar tom se necessário
+    if (options.emotionalTone) {
+      processedContent = this.adjustEmotionalTone(processedContent, options.emotionalTone)
+    }
+    
+    // Calcular confiança baseada na qualidade da resposta
+    const confidence = this.calculateResponseConfidence(processedContent, options)
+    
+    return {
+      content: processedContent,
+      metadata: {
+        originalLength,
+        processedLength: processedContent.length,
+        emotionalTone: options.emotionalTone || 'neutral',
+        confidence,
+        processingTime: 0, // Será definido no método principal
+        suggestions: suggestions.length > 0 ? suggestions : undefined,
+        actionItems: actionItems.length > 0 ? actionItems : undefined
+      }
+    }
+  }
+
+  private generateCacheKey(prompt: string, options: ResponseProcessingOptions): string {
+    const optionsString = JSON.stringify(options)
+    const promptHash = this.simpleHash(prompt)
+    const optionsHash = this.simpleHash(optionsString)
+    return `${promptHash}_${optionsHash}`
+  }
+
+  private simpleHash(str: string): string {
+    let hash = 0
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString(36)
+  }
+
+  private getCachedResponse(cacheKey: string): string | null {
+    const cached = this.responseCache.get(cacheKey)
+    if (cached && Date.now() - cached.timestamp.getTime() < cached.ttl) {
+      return cached.response
+    }
+    
+    if (cached) {
+      this.responseCache.delete(cacheKey) // Remove cache expirado
+    }
+    
+    return null
+  }
+
+  private cacheResponse(cacheKey: string, response: string, ttl: number = this.cacheDefaultTTL): void {
+    this.responseCache.set(cacheKey, {
+      response,
+      timestamp: new Date(),
+      ttl
+    })
+    
+    // Limpar cache antigo se necessário
+    if (this.responseCache.size > 100) {
+      const oldestKey = Array.from(this.responseCache.keys())[0]
+      this.responseCache.delete(oldestKey)
+    }
+  }
+
+  private addToContextHistory(prompt: string, response: string, context?: string): void {
+    this.contextHistory.push({
+      prompt,
+      response,
+      timestamp: new Date(),
+      context
+    })
+    
+    // Manter apenas o histórico mais recente
+    if (this.contextHistory.length > this.maxContextHistory) {
+      this.contextHistory.shift()
+    }
+  }
+
+  private getRelevantContext(prompt: string): typeof this.contextHistory {
+    // Implementação simples: retornar contexto recente
+    // Pode ser melhorado com análise de similaridade semântica
+    return this.contextHistory.filter(ctx => {
+      const promptLower = prompt.toLowerCase()
+      const ctxPromptLower = ctx.prompt.toLowerCase()
+      
+      // Verificar palavras-chave em comum
+      const promptWords = promptLower.split(' ').filter(w => w.length > 3)
+      const contextWords = ctxPromptLower.split(' ').filter(w => w.length > 3)
+      
+      const commonWords = promptWords.filter(word => contextWords.includes(word))
+      return commonWords.length > 0
+    })
+  }
+
+  private filterInappropriateContent(content: string): string {
+    // Implementação básica de filtro de conteúdo
+    const inappropriatePatterns = [
+      /\b(palavrão1|palavrão2)\b/gi,
+      // Adicionar mais padrões conforme necessário
+    ]
+    
+    let filtered = content
+    inappropriatePatterns.forEach(pattern => {
+      filtered = filtered.replace(pattern, '[conteúdo filtrado]')
+    })
+    
+    return filtered
+  }
+
+  private extractActionItems(content: string): string[] {
+    const actionPatterns = [
+      /(?:você deve|precisa|deveria|recomendo que|sugiro que)\s+([^.!?]+)/gi,
+      /(?:ação|passo|etapa)\s*\d*:?\s*([^.!?\n]+)/gi,
+      /(?:^|\n)[-*]\s*([^\n]+)/gm
+    ]
+    
+    const actions: string[] = []
+    
+    actionPatterns.forEach(pattern => {
+      let match
+      while ((match = pattern.exec(content)) !== null) {
+        const action = match[1]?.trim()
+        if (action && action.length > 10) {
+          actions.push(action)
+        }
+      }
+    })
+    
+    return [...new Set(actions)].slice(0, 5) // Remover duplicatas e limitar a 5
+  }
+
+  private personalizeResponse(content: string, userId: string): string {
+    // Implementação básica de personalização
+    // Em uma implementação real, isso consultaria dados do usuário
+    return content.replace(/\b(você|usuário)\b/gi, userId || 'você')
+  }
+
+  private adjustEmotionalTone(content: string, tone: string): string {
+    // Implementação básica de ajuste de tom
+    // Em uma implementação real, isso seria mais sofisticado
+    switch (tone) {
+      case 'supportive':
+        return content.replace(/\./g, '. Você consegue!')
+      case 'empathetic':
+        return `Entendo como você se sente. ${content}`
+      case 'casual':
+        return content.replace(/você/g, 'tu').replace(/Você/g, 'Tu')
+      default:
+        return content
+    }
+  }
+
+  private calculateResponseConfidence(content: string, options: ResponseProcessingOptions): number {
+    let confidence = 0.8 // Base confidence
+    
+    // Ajustar baseado no tamanho da resposta
+    if (content.length < 50) confidence -= 0.2
+    if (content.length > 500) confidence += 0.1
+    
+    // Ajustar baseado na presença de contexto
+    if (this.contextHistory.length > 0) confidence += 0.1
+    
+    // Ajustar baseado nas opções fornecidas
+    if (options.contextType) confidence += 0.05
+    if (options.emotionalTone) confidence += 0.05
+    
+    return Math.min(0.95, Math.max(0.3, confidence))
+  }
+
+  private generateFallbackResponse(options: ResponseProcessingOptions): string {
+    const fallbacks = {
+      crisis: 'Entendo que você está passando por um momento difícil. Embora eu não possa processar sua solicitação no momento, lembre-se de que você não está sozinho. Se precisar de ajuda imediata, considere entrar em contato com um profissional de saúde mental.',
+      general: 'Desculpe, não consegui processar sua solicitação no momento. Por favor, tente novamente em alguns instantes.',
+      analysis: 'Não foi possível completar a análise solicitada no momento. Verifique os dados fornecidos e tente novamente.',
+      conversation: 'Ops, parece que tive um problema para responder. Pode reformular sua pergunta?'
+    }
+    
+    return fallbacks[options.contextType || 'general']
+  }
+
+  // Métodos públicos para gerenciamento de cache e contexto
+  public clearCache(): void {
+    this.responseCache.clear()
+    console.log('Cache de respostas limpo')
+  }
+
+  public clearContextHistory(): void {
+    this.contextHistory = []
+    console.log('Histórico de contexto limpo')
+  }
+
+  public getContextHistory(): typeof this.contextHistory {
+    return [...this.contextHistory]
+  }
+
+  public getCacheStats(): {
+    size: number
+    hitRate: number
+    oldestEntry: Date | null
+  } {
+    const entries = Array.from(this.responseCache.values())
+    const oldestEntry = entries.length > 0 
+      ? new Date(Math.min(...entries.map(e => e.timestamp.getTime())))
+      : null
+    
+    return {
+      size: this.responseCache.size,
+      hitRate: 0, // Seria calculado com métricas de hit/miss
+      oldestEntry
+    }
+  }
 }
 
 export const geminiService = GeminiService.getInstance()
 export default GeminiService
+export { GeminiService }
 export type { AnalysisRequest, AnalysisResult }

@@ -43,12 +43,12 @@ class SecurityService {
   // Inicializa configurações de segurança a partir de variáveis de ambiente
   private initializeSecurityConfig() {
     this.securityConfig = {
-      jwtSecret: process.env.VITE_JWT_SECRET || this.generateFallbackSecret(),
-      sessionTimeout: parseInt(process.env.VITE_SESSION_TIMEOUT || '86400'), // 24 horas padrão
-      passwordMinLength: parseInt(process.env.VITE_PASSWORD_MIN_LENGTH || '8'),
-      twoFactorEnabled: process.env.VITE_TWO_FACTOR_ENABLED === 'true',
-      rateLimitPerMinute: parseInt(process.env.VITE_RATE_LIMIT_PER_MINUTE || '100'),
-      apiTimeout: parseInt(process.env.VITE_API_TIMEOUT || '30000')
+      jwtSecret: import.meta.env.VITE_JWT_SECRET || this.generateFallbackSecret(),
+      sessionTimeout: parseInt(import.meta.env.VITE_SESSION_TIMEOUT || '86400'), // 24 horas padrão
+      passwordMinLength: parseInt(import.meta.env.VITE_PASSWORD_MIN_LENGTH || '8'),
+      twoFactorEnabled: import.meta.env.VITE_TWO_FACTOR_ENABLED === 'true',
+      rateLimitPerMinute: parseInt(import.meta.env.VITE_RATE_LIMIT_PER_MINUTE || '100'),
+      apiTimeout: parseInt(import.meta.env.VITE_API_TIMEOUT || '30000')
     }
 
     // Validar configurações críticas

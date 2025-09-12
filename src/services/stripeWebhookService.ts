@@ -41,7 +41,7 @@ class StripeWebhookService {
   private isInitialized = false
 
   constructor() {
-    this.webhookSecret = process.env.VITE_STRIPE_WEBHOOK_SECRET || ''
+    this.webhookSecret = import.meta.env.VITE_STRIPE_WEBHOOK_SECRET || ''
   }
 
   /**

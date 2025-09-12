@@ -49,9 +49,9 @@ interface SpotifySearchResult {
 
 class AudioIntegrationService {
   private static instance: AudioIntegrationService
-  private readonly youtubeApiKey = process.env.VITE_YOUTUBE_API_KEY || 'AIzaSyBt4vyuZZhxDd5Vz1I4WfkTzKWht7SdcNA'
-  private readonly spotifyClientId = process.env.VITE_SPOTIFY_CLIENT_ID || ''
-  private readonly spotifyClientSecret = process.env.VITE_SPOTIFY_CLIENT_SECRET || ''
+  private readonly youtubeApiKey = import.meta.env.VITE_YOUTUBE_API_KEY || 'AIzaSyBt4vyuZZhxDd5Vz1I4WfkTzKWht7SdcNA'
+  private readonly spotifyClientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID || ''
+  private readonly spotifyClientSecret = import.meta.env.VITE_SPOTIFY_CLIENT_SECRET || ''
   private spotifyAccessToken: string | null = null
   private spotifyTokenExpiry: number = 0
 

@@ -1,6 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Sparkles, Sun, Moon, Sunset } from 'lucide-react'
+import { Sparkles, Sun, Moon, Sunset, Stars } from 'lucide-react'
 import { useAppStore } from '../../stores/useAppStore'
 import { getCapitalizedFirstName } from '../../utils/nameUtils'
 
@@ -9,8 +9,20 @@ const WelcomeHeader: React.FC = () => {
   
   const getGreeting = () => {
     const hour = new Date().getHours()
-    if (hour < 12) return { text: 'Bom dia', icon: Sun, gradient: 'from-amber-400 to-orange-500' }
-    if (hour < 18) return { text: 'Boa tarde', icon: Sunset, gradient: 'from-orange-400 to-red-500' }
+    
+    // Boa madrugada: 00:01h até 4:59h
+    if (hour >= 0 && hour <= 4) {
+      return { text: 'Boa madrugada', icon: Stars, gradient: 'from-indigo-600 to-purple-600' }
+    }
+    // Bom dia: 5h até 12h
+    if (hour >= 5 && hour <= 12) {
+      return { text: 'Bom dia', icon: Sun, gradient: 'from-amber-400 to-orange-500' }
+    }
+    // Boa tarde: 12:01h até 18h
+    if (hour >= 13 && hour <= 18) {
+      return { text: 'Boa tarde', icon: Sunset, gradient: 'from-orange-400 to-red-500' }
+    }
+    // Boa noite: 18:01h até 00h
     return { text: 'Boa noite', icon: Moon, gradient: 'from-indigo-400 to-purple-500' }
   }
 

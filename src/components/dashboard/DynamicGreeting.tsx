@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Sparkles, Sun, Moon, Sunset, Brain, Loader2, Quote } from 'lucide-react'
+import { Sparkles, Sun, Moon, Sunset, Stars, Brain, Loader2, Quote } from 'lucide-react'
 import { useAppStore } from '../../stores/useAppStore'
 import { geminiService } from '../../services/geminiService'
 import { getCapitalizedFirstName } from '../../utils/nameUtils'
@@ -21,16 +21,23 @@ const DynamicGreeting: React.FC<DynamicGreetingProps> = ({ className = '' }) => 
   } | null>(null)
   const [quoteLoading, setQuoteLoading] = useState(false)
 
-  const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' => {
+  const getTimeOfDay = (): 'dawn' | 'morning' | 'afternoon' | 'evening' => {
     const hour = new Date().getHours()
-    if (hour < 12) return 'morning'
-    if (hour < 18) return 'afternoon'
+    
+    // Boa madrugada: 00:01h até 4:59h
+    if (hour >= 0 && hour <= 4) return 'dawn'
+    // Bom dia: 5h até 12h
+    if (hour >= 5 && hour <= 12) return 'morning'
+    // Boa tarde: 12:01h até 18h
+    if (hour >= 13 && hour <= 18) return 'afternoon'
+    // Boa noite: 18:01h até 00h
     return 'evening'
   }
 
   const getGreetingIcon = () => {
     const timeOfDay = getTimeOfDay()
     switch (timeOfDay) {
+      case 'dawn': return { icon: Stars, gradient: 'from-indigo-600 to-purple-600' }
       case 'morning': return { icon: Sun, gradient: 'from-amber-400 to-orange-500' }
       case 'afternoon': return { icon: Sunset, gradient: 'from-orange-400 to-red-500' }
       case 'evening': return { icon: Moon, gradient: 'from-indigo-400 to-purple-500' }

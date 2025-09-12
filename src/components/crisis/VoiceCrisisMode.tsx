@@ -92,6 +92,7 @@ const VoiceCrisisMode: React.FC = () => {
   const [transcript, setTranscript] = useState('')
   const [breathingPhase, setBreathingPhase] = useState<'inhale' | 'hold' | 'exhale'>('inhale')
   const [breathingCount, setBreathingCount] = useState(0)
+
   
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
@@ -413,43 +414,18 @@ const VoiceCrisisMode: React.FC = () => {
     }
   }
 
+
+
   return (
     <>
       <AnimatePresence>
-        {!isActive && (
+        {!isActive && isListening && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="fixed bottom-6 right-6 z-40"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="fixed bottom-6 right-6 z-40 bg-black/80 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap"
           >
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={isListening ? stopListening : startListening}
-              className={`p-4 rounded-full shadow-2xl transition-all duration-300 ${
-                isListening 
-                  ? 'bg-gradient-to-r from-red-500 to-red-600 animate-pulse' 
-                  : 'bg-gradient-to-r from-royal-gold to-amber-500'
-              }`}
-              title={isListening ? 'Parar escuta' : 'Ativar modo crise por voz'}
-            >
-              {isListening ? (
-                <MicOff className="w-6 h-6 text-white" />
-              ) : (
-                <Mic className="w-6 h-6 text-deep-forest" />
-              )}
-            </motion.button>
-            
-            {isListening && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="absolute bottom-full right-0 mb-2 bg-black/80 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap"
-              >
-                Escutando... Diga "preciso de ajuda"
-              </motion.div>
-            )}
+            Escutando... Diga "preciso de ajuda"
           </motion.div>
         )}
         
