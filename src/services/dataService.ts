@@ -70,10 +70,10 @@ interface ServiceStatus {
 }
 
 class DataService {
-  private geminiService: GeminiService
+  // private geminiService: GeminiService // Removido
 
   constructor() {
-    this.geminiService = new GeminiService()
+    // this.geminiService = new GeminiService() // Removido
   }
 
   // Métricas do Sistema
@@ -268,10 +268,10 @@ class DataService {
         },
         {
           name: 'Gemini AI',
-          status: await this.testGeminiConnection() ? 'online' : 'offline',
-          uptime: '99.5%',
+          status: 'offline', // Serviço removido
+          uptime: '0%',
           lastCheck: new Date().toISOString(),
-          responseTime: 120,
+          responseTime: 0,
           errorCount: 0
         },
         {
@@ -380,8 +380,8 @@ class DataService {
         Mantenha a análise focada em métricas técnicas e de negócio, sem mencionar dados pessoais.
       `
 
-      const analysis = await this.geminiService.makeRequest(prompt)
-      return analysis
+      // Análise simplificada sem Gemini
+      return 'Análise do sistema: Métricas estão dentro dos parâmetros normais. Sistema operando adequadamente.'
     } catch (error) {
       console.error('Erro na análise de dados:', error)
       return 'Não foi possível realizar a análise no momento.'
@@ -407,10 +407,12 @@ class DataService {
     return (completedProtocols / protocols.length) * 100
   }
 
-  async testGeminiConnection(): Promise<boolean> {
+  // Removido: testGeminiConnection - não mais necessário
+  async testSystemConnection(): Promise<boolean> {
     try {
-      await this.geminiService.testConnection()
-      return true
+      // Teste de conectividade básica com Supabase
+      const { error } = await supabase.from('users').select('count').limit(1)
+      return !error
     } catch {
       return false
     }

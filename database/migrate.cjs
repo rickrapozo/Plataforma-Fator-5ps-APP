@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { supabaseAdmin, migrationConfig } = require('./config');
+const { supabaseAdmin, migrationConfig } = require('./config.cjs');
 
 class DatabaseMigrator {
   constructor() {

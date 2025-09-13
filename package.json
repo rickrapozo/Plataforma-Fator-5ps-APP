@@ -15,9 +15,9 @@
     "lint:fix": "eslint . --ext ts,tsx,js,jsx --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "db:migrate": "node database/migrate.js migrate",
-    "db:seed": "node database/migrate.js seed",
-    "db:reset": "node database/migrate.js reset",
+    "db:migrate": "node database/migrate.cjs migrate",
+    "db:seed": "node database/migrate.cjs seed",
+    "db:reset": "node database/migrate.cjs reset",
     "cleanup": "node scripts/cleanup.js",
     "quality": "npm run lint:fix && npm run format && npm run test"
   },

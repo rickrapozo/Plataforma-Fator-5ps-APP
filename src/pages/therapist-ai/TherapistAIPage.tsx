@@ -18,6 +18,7 @@ interface ChatMessage {
 const TherapistAIPage: React.FC = () => {
   const { user, dailyProtocol, onboardingResults, streak, level, xp, hasFullAccess, isAdmin } = useAppStore()
   const [aiMessageCount, setAiMessageCount] = useState(1) // Contador de mensagens da IA (inicia com 1 pela mensagem inicial)
+
   
   // Função para gerar mensagem de apresentação personalizada
   const generateWelcomeMessage = () => {
@@ -29,10 +30,10 @@ const TherapistAIPage: React.FC = () => {
       return {
         content: `Olá ${userName}! 👋 Sou seu Terapeuta Essencial AI com acesso administrativo completo. Estou aqui para te apoiar tanto no seu bem-estar pessoal quanto na gestão da plataforma. Posso te ajudar com análises de dados, suporte aos usuários, ou simplesmente conversar sobre seu equilíbrio mental e físico. Como posso te apoiar hoje?`,
         suggestions: [
-          'Análise de métricas da plataforma',
-          'Como está meu bem-estar pessoal?',
-          'Gerenciamento de conteúdo',
-          'Preciso de um momento de relaxamento'
+          'Como aplicar o método 5Ps na minha vida?',
+          'Preciso de ajuda com meu bem-estar pessoal',
+          'Quais são os 5 pilares do desenvolvimento pessoal?',
+          'Como melhorar meu equilíbrio emocional?'
         ]
       }
     }
@@ -60,22 +61,23 @@ const TherapistAIPage: React.FC = () => {
     
     welcomeContent += `Estou aqui para te apoiar em cada passo, seja para fortalecer sua mente, cuidar do seu corpo, ou encontrar equilíbrio emocional. Vamos conversar sobre o que está em seu coração hoje?`
     
-    // Sugestões personalizadas baseadas no perfil
+    // Sugestões focadas em ajuda pessoal e método 5Ps
     let personalizedSuggestions = [
-      'Como está meu bem-estar hoje?',
-      'Preciso de técnicas de relaxamento',
-      'Como melhorar minha energia física?'
+      'Como aplicar o método 5Ps na minha vida?',
+      'Preciso de ajuda com desenvolvimento pessoal',
+      'Quais são os 5 pilares do bem-estar?',
+      'Como melhorar meu crescimento pessoal?'
     ]
     
     if (onboardingResults) {
       if (onboardingResults.emotion < 3) {
-        personalizedSuggestions.push('Exercícios para acalmar a ansiedade')
+        personalizedSuggestions[3] = 'Como trabalhar meu equilíbrio emocional com os 5Ps?'
       } else if (onboardingResults.thought < 3) {
-        personalizedSuggestions.push('Como fortalecer minha autoconfiança?')
+        personalizedSuggestions[3] = 'Como fortalecer minha mentalidade com o método 5Ps?'
       } else if (onboardingResults.feeling < 3) {
-        personalizedSuggestions.push('Estratégias para lidar com o estresse')
+        personalizedSuggestions[3] = 'Como usar os 5Ps para lidar com o estresse?'
       } else {
-        personalizedSuggestions.push('Como manter minha motivação?')
+        personalizedSuggestions[3] = 'Como manter minha evolução pessoal com os 5Ps?'
       }
     }
     
@@ -107,6 +109,8 @@ const TherapistAIPage: React.FC = () => {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+
 
   const handleSendMessage = async (message?: string) => {
     const messageToSend = message || inputMessage.trim()
@@ -154,12 +158,13 @@ const TherapistAIPage: React.FC = () => {
       const newAiMessageCount = aiMessageCount + 1
       setAiMessageCount(newAiMessageCount)
 
+      // Adiciona a resposta da IA
       const aiMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
+        id: `${Date.now()}_ai`,
         type: 'ai',
         content: response.response,
-        timestamp: new Date(),
-        suggestions: newAiMessageCount <= 3 ? response.suggestions : undefined // Só mostra sugestões nas 3 primeiras mensagens
+        timestamp: new Date()
+        // Sugestões removidas - apenas na mensagem de boas-vindas
       }
 
       setMessages(prev => [...prev, aiMessage])
@@ -179,12 +184,8 @@ const TherapistAIPage: React.FC = () => {
         id: (Date.now() + 2).toString(),
         type: 'ai',
         content: 'Desculpe, estou enfrentando dificuldades técnicas no momento. Tente novamente em alguns instantes.',
-        timestamp: new Date(),
-        suggestions: newAiMessageCount <= 3 ? [
-          'Verifique sua conexão com a internet',
-          'Tente reformular sua pergunta',
-          'Entre em contato com o suporte se necessário'
-        ] : undefined // Só mostra sugestões nas 3 primeiras mensagens
+        timestamp: new Date()
+        // Sugestões removidas - apenas na mensagem de boas-vindas
       }
       
       setMessages(prev => [...prev, errorMessage])

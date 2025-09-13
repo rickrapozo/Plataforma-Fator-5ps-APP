@@ -1,4 +1,4 @@
-import GeminiService from './geminiService';
+// Removed GeminiService import - using keyword-based analysis instead
 
 export interface SentimentAnalysis {
   sentiment: 'very_positive' | 'positive' | 'neutral' | 'negative' | 'very_negative' | 'crisis';
@@ -35,12 +35,11 @@ export interface ConversationContext {
 
 export class SentimentAnalysisService {
   private static instance: SentimentAnalysisService;
-  private geminiService: GeminiService;
   private analysisHistory: SentimentAnalysis[] = [];
   private contextWindow = 5; // Número de mensagens para contexto
 
   private constructor() {
-    this.geminiService = GeminiService.getInstance();
+    // Análise baseada em palavras-chave, sem dependência do Gemini
   }
 
   public static getInstance(): SentimentAnalysisService {
@@ -56,14 +55,7 @@ export class SentimentAnalysisService {
     previousAnalysis?: SentimentAnalysis
   ): Promise<SentimentAnalysis> {
     try {
-      const contextText = conversationHistory.slice(-this.contextWindow).join('\n');
-      const trendInfo = previousAnalysis ? this.getTrendInfo(previousAnalysis) : '';
-
-      const prompt = this.buildAnalysisPrompt(text, contextText, trendInfo);
-      
-      const response = await this.geminiService.makeRequest(prompt);
-
-      const analysis = this.parseAnalysisResponse(response || '{}');
+      const analysis = this.analyzeTextWithKeywords(text);
       analysis.timestamp = new Date();
       
       this.analysisHistory.push(analysis);
@@ -80,93 +72,105 @@ export class SentimentAnalysisService {
     }
   }
 
-  private buildAnalysisPrompt(text: string, context: string, trendInfo: string): string {
-    return `
-Você é um especialista em análise de sentimentos e psicologia clínica. Analise o seguinte texto de uma pessoa que pode estar em crise emocional.
-
-Texto atual: "${text}"
-
-${context ? `Contexto da conversa:\n${context}` : ''}
-
-${trendInfo ? `Tendência anterior:\n${trendInfo}` : ''}
-
-Forneça uma análise detalhada em formato JSON seguindo exatamente esta estrutura:
-
-{
-  "sentiment": "very_positive|positive|neutral|negative|very_negative|crisis",
-  "confidence": 0.85,
-  "emotions": {
-    "joy": 0.1,
-    "sadness": 0.7,
-    "anger": 0.2,
-    "fear": 0.6,
-    "anxiety": 0.8,
-    "hope": 0.3
-  },
-  "urgencyLevel": "low|medium|high|critical",
-  "riskFactors": ["fator1", "fator2"],
-  "supportiveElements": ["elemento1", "elemento2"],
-  "recommendations": {
-    "immediateActions": ["ação1", "ação2"],
-    "techniques": ["técnica1", "técnica2"],
-    "followUp": ["acompanhamento1", "acompanhamento2"]
-  }
-}
-
-Critérios para classificação:
-
-**Sentiment:**
-- crisis: ideação suicida, autolesão, desespero extremo, perda total de esperança
-- very_negative: depressão severa, ansiedade extrema, pensamentos muito negativos
-- negative: tristeza profunda, preocupação intensa, pessimismo
-- neutral: estado emocional equilibrado, sem sinais de crise
-- positive: otimismo moderado, esperança, busca por soluções
-- very_positive: alegria, gratidão, bem-estar emocional
-
-**Urgency Level:**
-- critical: risco imediato de autolesão, necessita intervenção urgente
-- high: crise emocional severa, necessita apoio imediato
-- medium: estresse significativo, necessita acompanhamento
-- low: situação estável, apoio preventivo
-
-**Emotions:** Valores de 0 a 1 representando a intensidade de cada emoção detectada.
-
-**Risk Factors:** Elementos que indicam risco ou vulnerabilidade.
-
-**Supportive Elements:** Aspectos positivos ou recursos de enfrentamento identificados.
-
-**Recommendations:** Sugestões específicas baseadas na análise.
-
-Responda APENAS com o JSON válido, sem explicações adicionais.
-    `;
+  private analyzeTextWithKeywords(text: string): SentimentAnalysis {
+    const lowerText = text.toLowerCase();
+    
+    // Palavras-chave para diferentes categorias
+    const crisisKeywords = ['suicídio', 'morrer', 'acabar com tudo', 'não aguento mais', 'sem saída', 'quero morrer'];
+    const veryNegativeKeywords = ['depressão', 'desespero', 'sozinho', 'perdido', 'inútil', 'fracasso'];
+    const negativeKeywords = ['triste', 'preocupado', 'ansioso', 'nervoso', 'chateado', 'mal'];
+    const positiveKeywords = ['bem', 'feliz', 'alegre', 'otimista', 'esperança', 'melhor'];
+    const veryPositiveKeywords = ['ótimo', 'excelente', 'maravilhoso', 'perfeito', 'radiante', 'eufórico'];
+    
+    let sentiment: SentimentAnalysis['sentiment'] = 'neutral';
+    let urgencyLevel: SentimentAnalysis['urgencyLevel'] = 'low';
+    let confidence = 0.7;
+    let riskFactors: string[] = [];
+    let supportiveElements: string[] = [];
+    
+    // Detectar crise
+    if (crisisKeywords.some(keyword => lowerText.includes(keyword))) {
+      sentiment = 'crisis';
+      urgencyLevel = 'critical';
+      confidence = 0.9;
+      riskFactors = ['ideação suicida', 'desespero extremo'];
+    }
+    // Detectar muito negativo
+    else if (veryNegativeKeywords.some(keyword => lowerText.includes(keyword))) {
+      sentiment = 'very_negative';
+      urgencyLevel = 'high';
+      confidence = 0.8;
+      riskFactors = ['depressão severa', 'isolamento'];
+    }
+    // Detectar negativo
+    else if (negativeKeywords.some(keyword => lowerText.includes(keyword))) {
+      sentiment = 'negative';
+      urgencyLevel = 'medium';
+      riskFactors = ['ansiedade', 'estresse'];
+    }
+    // Detectar positivo
+    else if (positiveKeywords.some(keyword => lowerText.includes(keyword))) {
+      sentiment = 'positive';
+      supportiveElements = ['otimismo', 'esperança'];
+    }
+    // Detectar muito positivo
+    else if (veryPositiveKeywords.some(keyword => lowerText.includes(keyword))) {
+      sentiment = 'very_positive';
+      supportiveElements = ['alta motivação', 'bem-estar'];
+    }
+    
+    return {
+      sentiment,
+      confidence,
+      emotions: this.calculateEmotionsFromSentiment(sentiment),
+      urgencyLevel,
+      riskFactors,
+      supportiveElements,
+      recommendations: this.generateRecommendations(sentiment, urgencyLevel),
+      timestamp: new Date()
+    };
   }
 
-  private parseAnalysisResponse(responseContent: string): SentimentAnalysis {
-    try {
-      // Limpar possíveis caracteres extras
-      const cleanContent = responseContent
-        .replace(/```json/g, '')
-        .replace(/```/g, '')
-        .trim();
-      
-      const parsed = JSON.parse(cleanContent);
-      
-      // Validar e normalizar a estrutura
-      return {
-        sentiment: this.validateSentiment(parsed.sentiment),
-        confidence: Math.max(0, Math.min(1, parsed.confidence || 0.5)),
-        emotions: this.validateEmotions(parsed.emotions),
-        urgencyLevel: this.validateUrgencyLevel(parsed.urgencyLevel),
-        riskFactors: Array.isArray(parsed.riskFactors) ? parsed.riskFactors : [],
-        supportiveElements: Array.isArray(parsed.supportiveElements) ? parsed.supportiveElements : [],
-        recommendations: this.validateRecommendations(parsed.recommendations),
-        timestamp: new Date()
-      };
-    } catch (error) {
-      console.error('Erro ao parsear resposta de análise:', error);
-      return this.getDefaultAnalysis();
+  private calculateEmotionsFromSentiment(sentiment: SentimentAnalysis['sentiment']): SentimentAnalysis['emotions'] {
+    const baseEmotions = { joy: 0.1, sadness: 0.1, anger: 0.1, fear: 0.1, anxiety: 0.1, hope: 0.1 };
+    
+    switch (sentiment) {
+      case 'crisis':
+        return { ...baseEmotions, sadness: 0.9, fear: 0.8, anxiety: 0.9, hope: 0.0 };
+      case 'very_negative':
+        return { ...baseEmotions, sadness: 0.8, anxiety: 0.7, hope: 0.2 };
+      case 'negative':
+        return { ...baseEmotions, sadness: 0.6, anxiety: 0.5, hope: 0.3 };
+      case 'positive':
+        return { ...baseEmotions, joy: 0.6, hope: 0.7, sadness: 0.2 };
+      case 'very_positive':
+        return { ...baseEmotions, joy: 0.9, hope: 0.8, sadness: 0.0 };
+      default:
+        return baseEmotions;
     }
   }
+
+  private generateRecommendations(sentiment: SentimentAnalysis['sentiment'], urgencyLevel: SentimentAnalysis['urgencyLevel']): SentimentAnalysis['recommendations'] {
+    const baseRecommendations = {
+      immediateActions: ['Respiração profunda', 'Buscar ambiente seguro'],
+      techniques: ['Técnica de respiração 4-7-8', 'Grounding 5-4-3-2-1'],
+      followUp: ['Acompanhamento em 24h', 'Registro de humor']
+    };
+    
+    if (urgencyLevel === 'critical') {
+      return {
+        immediateActions: ['Contatar emergência', 'Não ficar sozinho', 'Remover meios de autolesão'],
+        techniques: ['Técnica de grounding', 'Respiração de emergência'],
+        followUp: ['Acompanhamento profissional imediato', 'Suporte familiar']
+      };
+    }
+    
+    return baseRecommendations;
+  }
+
+  // Método removido - análise agora é baseada em palavras-chave
+
+  // Método removido - análise agora é baseada em palavras-chave
 
   private validateSentiment(sentiment: any): SentimentAnalysis['sentiment'] {
     const validSentiments = ['very_positive', 'positive', 'neutral', 'negative', 'very_negative', 'crisis'];

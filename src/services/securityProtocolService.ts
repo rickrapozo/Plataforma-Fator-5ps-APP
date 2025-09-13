@@ -1,4 +1,4 @@
-import CryptoJS from 'crypto-js';
+import * as CryptoJS from 'crypto-js';
 
 export interface SecurityConfig {
   encryptionKey: string;
@@ -114,7 +114,7 @@ class SecurityProtocolService {
       return encrypted;
     } catch (error) {
       this.logAudit('system', 'encryption_error', 'sensitive_data', 
-        { error: error.message }, 'high');
+        { error: error instanceof Error ? error.message : String(error) }, 'high');
       throw new Error('Falha na criptografia dos dados');
     }
   }
@@ -134,7 +134,7 @@ class SecurityProtocolService {
       return JSON.parse(jsonString);
     } catch (error) {
       this.logAudit(userId, 'decryption_error', 'sensitive_data', 
-        { error: error.message, purpose }, 'high');
+        { error: error instanceof Error ? error.message : String(error), purpose }, 'high');
       throw new Error('Falha na descriptografia dos dados');
     }
   }
@@ -472,7 +472,7 @@ class SecurityProtocolService {
   }
 
   private getSessionIdByUserId(userId: string): string | null {
-    for (const [sessionId, session] of this.activeSessions) {
+    for (const [sessionId, session] of Array.from(this.activeSessions)) {
       if (session.userId === userId && session.isActive) {
         return sessionId;
       }
@@ -493,7 +493,7 @@ class SecurityProtocolService {
       const now = new Date();
       const expiredSessions: string[] = [];
       
-      for (const [sessionId, session] of this.activeSessions) {
+      for (const [sessionId, session] of Array.from(this.activeSessions)) {
         const timeDiff = (now.getTime() - session.lastActivity.getTime()) / (1000 * 60);
         
         if (timeDiff > this.config.sessionTimeout && !this.config.emergencyOverride) {
@@ -515,7 +515,7 @@ class SecurityProtocolService {
     const now = new Date();
     const expiredDataIds: string[] = [];
     
-    for (const [dataId, data] of this.sensitiveDataStore) {
+    for (const [dataId, data] of Array.from(this.sensitiveDataStore)) {
       if (data.expiresAt && now > data.expiresAt) {
         expiredDataIds.push(dataId);
       }
@@ -593,7 +593,7 @@ class SecurityProtocolService {
   private calculateDataDistribution(): Record<string, number> {
     const distribution: Record<string, number> = {};
     
-    for (const data of this.sensitiveDataStore.values()) {
+    for (const data of Array.from(this.sensitiveDataStore.values())) {
       distribution[data.type] = (distribution[data.type] || 0) + 1;
     }
     
@@ -603,7 +603,7 @@ class SecurityProtocolService {
   private calculateClassificationDistribution(): Record<string, number> {
     const distribution: Record<string, number> = {};
     
-    for (const data of this.sensitiveDataStore.values()) {
+    for (const data of Array.from(this.sensitiveDataStore.values())) {
       distribution[data.classification] = (distribution[data.classification] || 0) + 1;
     }
     
@@ -658,7 +658,7 @@ class SecurityProtocolService {
     }
     
     // Limpar todas as sessões ativas
-    for (const sessionId of this.activeSessions.keys()) {
+    for (const sessionId of Array.from(this.activeSessions.keys())) {
       this.terminateSession(sessionId, 'service_shutdown');
     }
     

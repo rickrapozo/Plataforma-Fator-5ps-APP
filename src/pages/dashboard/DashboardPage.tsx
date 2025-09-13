@@ -10,6 +10,7 @@ import VoiceCrisisMode from '../../components/crisis/VoiceCrisisMode'
 import StreakCounter from '../../components/dashboard/StreakCounter'
 import WeeklyStats from '../../components/dashboard/WeeklyStats'
 import AchievementSystem from '../../components/dashboard/AchievementSystem'
+import MotivationalMessages from '../../components/shared/MotivationalMessages'
 
 
 const DashboardPage: React.FC = () => {
@@ -114,6 +115,9 @@ const DashboardPage: React.FC = () => {
             </p>
           </motion.div>
         )}
+
+        {/* Motivational Messages Section - Final da Página */}
+        <MotivationalMessages />
       </div>
       
       {/* Voice Crisis Mode - Global Floating Component */}

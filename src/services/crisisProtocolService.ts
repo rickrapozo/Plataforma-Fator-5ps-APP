@@ -1,5 +1,4 @@
-import { GeminiService } from './geminiService';
-import { GeminiTTSService } from './geminiTTSService';
+// Removed GeminiService import - using local analysis instead
 
 export interface CrisisProtocol {
   id: string;
@@ -45,13 +44,9 @@ export interface CrisisAnalysisResult {
 
 class CrisisProtocolService {
   private static instance: CrisisProtocolService;
-  private geminiService: GeminiService;
-  private ttsService: GeminiTTSService;
   private protocols: Map<string, CrisisProtocol>;
 
   private constructor() {
-    this.geminiService = GeminiService.getInstance();
-    this.ttsService = new GeminiTTSService();
     this.protocols = new Map();
     this.initializeProtocols();
   }
@@ -233,49 +228,55 @@ class CrisisProtocolService {
   }
 
   public async analyzeCrisisAndSelectProtocol(userInput: string, context?: any): Promise<CrisisAnalysisResult> {
-    const analysisPrompt = `
-      Analise a seguinte mensagem de uma pessoa em crise emocional e determine:
-      1. Nível de urgência (low, medium, high, critical)
-      2. Protocolo recomendado (breathing-478, grounding-54321, cognitive-restructuring)
-      3. Estado emocional identificado
-      4. Fatores de risco presentes
-      5. Abordagem personalizada sugerida
-
-      Mensagem: "${userInput}"
-      
-      Protocolos disponíveis:
-      - breathing-478: Para ansiedade geral, estresse, nervosismo
-      - grounding-54321: Para ataques de pânico, dissociação, descontrole
-      - cognitive-restructuring: Para pensamentos negativos, preocupações, ruminação
-
-      Responda em formato JSON:
-      {
-        "urgencyLevel": "low|medium|high|critical",
-        "recommendedProtocol": "protocol-id",
-        "emotionalState": "descrição do estado emocional",
-        "riskFactors": ["fator1", "fator2"],
-        "personalizedApproach": "abordagem personalizada para esta pessoa"
-      }
-    `;
-
-    try {
-      const response = await this.geminiService.generateResponse(analysisPrompt, {
-        maxTokens: 500,
-        temperature: 0.3
-      });
-
-      return JSON.parse(response.message);
-    } catch (error) {
-      console.error('Erro na análise de crise:', error);
-      // Fallback para protocolo padrão
-      return {
-        urgencyLevel: 'medium',
-        recommendedProtocol: 'breathing-478',
-        emotionalState: 'ansiedade geral',
-        riskFactors: ['estresse'],
-        personalizedApproach: 'Vamos começar com uma técnica de respiração para te ajudar a se acalmar.'
-      };
+    const input = userInput.toLowerCase();
+    
+    // Análise baseada em palavras-chave
+    const panicKeywords = ['pânico', 'desespero', 'descontrole', 'não consigo', 'sufocando', 'coração acelerado'];
+    const anxietyKeywords = ['ansioso', 'nervoso', 'preocupado', 'estresse', 'tensão', 'inquieto'];
+    const negativeThoughtsKeywords = ['inútil', 'fracasso', 'não sirvo', 'pessimista', 'ruminação', 'pensamentos negativos'];
+    const criticalKeywords = ['suicídio', 'morrer', 'acabar com tudo', 'não aguento mais', 'sem saída'];
+    
+    let urgencyLevel: 'low' | 'medium' | 'high' | 'critical' = 'low';
+    let recommendedProtocol = 'breathing-478';
+    let emotionalState = 'estado emocional alterado';
+    let riskFactors: string[] = [];
+    
+    // Detectar nível crítico
+    if (criticalKeywords.some(keyword => input.includes(keyword))) {
+      urgencyLevel = 'critical';
+      recommendedProtocol = 'grounding-54321';
+      emotionalState = 'crise severa';
+      riskFactors = ['ideação suicida', 'desespero extremo'];
     }
+    // Detectar pânico
+    else if (panicKeywords.some(keyword => input.includes(keyword))) {
+      urgencyLevel = 'high';
+      recommendedProtocol = 'grounding-54321';
+      emotionalState = 'ataque de pânico';
+      riskFactors = ['pânico', 'descontrole'];
+    }
+    // Detectar pensamentos negativos
+    else if (negativeThoughtsKeywords.some(keyword => input.includes(keyword))) {
+      urgencyLevel = 'medium';
+      recommendedProtocol = 'cognitive-restructuring';
+      emotionalState = 'pensamentos negativos';
+      riskFactors = ['autocrítica', 'pessimismo'];
+    }
+    // Detectar ansiedade
+    else if (anxietyKeywords.some(keyword => input.includes(keyword))) {
+      urgencyLevel = 'medium';
+      recommendedProtocol = 'breathing-478';
+      emotionalState = 'ansiedade';
+      riskFactors = ['estresse', 'ansiedade'];
+    }
+    
+    return {
+      urgencyLevel,
+      recommendedProtocol,
+      emotionalState,
+      riskFactors,
+      personalizedApproach: 'Vamos trabalhar juntos para te ajudar a se sentir melhor. Escolhi uma técnica que pode ser muito eficaz para sua situação atual.'
+    };
   }
 
   public async generateCrisisResponse(userInput: string, userName?: string): Promise<CrisisResponse> {
@@ -308,32 +309,13 @@ class CrisisProtocolService {
       Responda apenas com a mensagem, sem formatação adicional.
     `;
 
-    let personalizedMessage: string;
-    try {
-      const response = await this.geminiService.generateResponse(personalizationPrompt, {
-        maxTokens: 200,
-        temperature: 0.7
-      });
-      personalizedMessage = response.message;
-    } catch (error) {
-      console.error('Erro ao gerar mensagem personalizada:', error);
-      personalizedMessage = `Olá ${userName || 'pessoa querida'}, eu entendo que você está passando por um momento difícil. Vamos trabalhar juntos com a técnica ${protocol.name} para te ajudar a se sentir melhor. Você não está sozinho(a) nisto.`;
-    }
+    // Personalização simplificada sem Gemini
+    const personalizedMessage = `Olá ${userName || 'pessoa querida'}, eu entendo que você está passando por um momento difícil. Vamos trabalhar juntos com a técnica ${protocol.name} para te ajudar a se sentir melhor. Você não está sozinho(a) nisto.`;
+    
+    console.log('Mensagem personalizada gerada localmente');
 
-    // 3. Gerar áudio se habilitado
+    // 3. Áudio desabilitado (funcionalidade TTS removida)
     let audioUrl: string | undefined;
-    if (protocol.audioEnabled) {
-      try {
-        const audioResponse = await this.ttsService.textToSpeech(personalizedMessage, {
-          voice: 'calm-female',
-          speed: 0.9,
-          language: 'pt-BR'
-        });
-        audioUrl = audioResponse.audioUrl;
-      } catch (error) {
-        console.error('Erro ao gerar áudio:', error);
-      }
-    }
 
     // 4. Calcular duração estimada
     const estimatedDuration = protocol.steps.reduce((total, step) => total + step.duration, 0);
@@ -367,12 +349,27 @@ class CrisisProtocolService {
     if (!step.audioScript) return null;
 
     try {
-      const response = await this.ttsService.textToSpeech(step.audioScript, {
-        voice: 'calm-female',
-        speed: 0.8,
-        language: 'pt-BR'
-      });
-      return response.audioUrl;
+      // Usar síntese de voz nativa do navegador
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(step.audioScript);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 0.8;
+        utterance.pitch = 1;
+        
+        // Tentar encontrar uma voz feminina em português
+        const voices = speechSynthesis.getVoices();
+        const ptVoice = voices.find(voice => 
+          voice.lang.includes('pt') && voice.name.toLowerCase().includes('female')
+        ) || voices.find(voice => voice.lang.includes('pt'));
+        
+        if (ptVoice) {
+          utterance.voice = ptVoice;
+        }
+        
+        speechSynthesis.speak(utterance);
+        return 'native-speech-synthesis'; // Indicador de que o áudio foi reproduzido
+      }
+      return null;
     } catch (error) {
       console.error('Erro ao gerar áudio do passo:', error);
       return null;
@@ -383,7 +380,7 @@ class CrisisProtocolService {
     const detectedProtocols: string[] = [];
     const lowerText = text.toLowerCase();
 
-    for (const protocol of this.protocols.values()) {
+    for (const protocol of Array.from(this.protocols.values())) {
       const hasMatch = protocol.triggers.some(trigger => 
         lowerText.includes(trigger.toLowerCase())
       );

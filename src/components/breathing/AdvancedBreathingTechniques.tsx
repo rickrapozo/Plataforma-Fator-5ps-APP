@@ -335,7 +335,7 @@ const AdvancedBreathingTechniques: React.FC<AdvancedBreathingTechniquesProps> = 
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="font-semibold text-sm">{technique.name}</h3>
                   <div className="flex gap-1">
-                    <Badge className={getCategoryColor(technique.category)} size="sm">
+                    <Badge className={getCategoryColor(technique.category)}>
                       {technique.category}
                     </Badge>
                     <div className={`w-2 h-2 rounded-full ${getDifficultyColor(technique.difficulty)}`} />

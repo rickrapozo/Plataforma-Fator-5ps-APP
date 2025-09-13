@@ -3,12 +3,13 @@
  * Este arquivo consolida todas as configurações de banco de dados
  */
 
+require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 
-// Configurações do Supabase
+// Configuração do Supabase
 const supabaseConfig = {
-  url: process.env.SUPABASE_URL || 'https://your-project.supabase.co',
-  anonKey: process.env.SUPABASE_ANON_KEY || 'your-anon-key',
+  url: process.env.VITE_SUPABASE_URL || 'https://oywdjirdotwdsixpxiox.supabase.co',
+  anonKey: process.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key',
   serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY || 'your-service-key'
 };
 

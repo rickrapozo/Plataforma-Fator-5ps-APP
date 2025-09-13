@@ -18,7 +18,7 @@ import {
   Pause
 } from 'lucide-react'
 import { useAppStore } from '../../stores/useAppStore'
-import { geminiService } from '../../services/geminiService'
+// Removed geminiService import - using local analysis instead
 
 interface JourneyStep {
   id: string
@@ -120,31 +120,61 @@ const DailyJourney: React.FC<DailyJourneyProps> = ({ className = '' }) => {
       setIsLoading(true)
       
       try {
-        const journey = await geminiService.generateDailyJourney({
-          currentAlignment: {
-            pensamento: dailyProtocol.p1_affirmations.length > 0 ? 0.8 : 0.3,
-            sentimento: dailyProtocol.p2_feeling ? 0.8 : 0.3,
-            emocao: dailyProtocol.p3_peak_state_completed ? 0.8 : 0.3,
-            acao: dailyProtocol.p4_completed ? 0.8 : 0.3,
-            resultado: (dailyProtocol.p5_victory && dailyProtocol.p5_gratitude) ? 0.8 : 0.3
+        // Jornada diária pré-definida baseada nos 5 Pilares
+        const predefinedSteps = [
+          {
+            title: 'Alinhamento Mental',
+            description: 'Pratique afirmações positivas para alinhar seus pensamentos',
+            estimatedTime: 5,
+            priority: 'high' as const,
+            action: 'Repita 3 afirmações positivas sobre seus objetivos',
+            benefits: ['Clareza mental', 'Foco direcionado']
           },
-          goals: ['Desenvolver os 5 Pilares', 'Manter consistência diária'],
-          challenges: ['Manter foco', 'Gerenciar tempo'],
-          preferences: { timeOfDay: new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening' },
-          availableTime: 30
-        })
+          {
+            title: 'Conexão Emocional',
+            description: 'Identifique e acolha seus sentimentos do momento',
+            estimatedTime: 5,
+            priority: 'high' as const,
+            action: 'Faça uma pausa para reconhecer como você se sente',
+            benefits: ['Autoconhecimento', 'Equilíbrio emocional']
+          },
+          {
+            title: 'Estado de Pico',
+            description: 'Ative sua energia vital através de respiração consciente',
+            estimatedTime: 10,
+            priority: 'medium' as const,
+            action: 'Pratique 5 respirações profundas e conscientes',
+            benefits: ['Energia renovada', 'Presença no momento']
+          },
+          {
+            title: 'Ação Direcionada',
+            description: 'Execute uma ação concreta em direção aos seus objetivos',
+            estimatedTime: 15,
+            priority: 'high' as const,
+            action: 'Complete uma tarefa importante do seu dia',
+            benefits: ['Progresso tangível', 'Senso de realização']
+          },
+          {
+            title: 'Celebração e Gratidão',
+            description: 'Reconheça suas conquistas e pratique gratidão',
+            estimatedTime: 5,
+            priority: 'medium' as const,
+            action: 'Liste 3 coisas pelas quais você é grato hoje',
+            benefits: ['Positividade', 'Reconhecimento do progresso']
+          }
+        ]
         
-        // Converter os steps do Gemini para o formato JourneyStep
-        const convertedSteps: JourneyStep[] = journey.steps.map((step, index) => ({
+        // Converter para o formato JourneyStep
+        const convertedSteps: JourneyStep[] = predefinedSteps.map((step, index) => ({
           id: `step-${index}`,
           pillar: index % 5 === 0 ? 'pensamento' : index % 5 === 1 ? 'sentimento' : index % 5 === 2 ? 'emocao' : index % 5 === 3 ? 'acao' : 'resultado',
           title: step.title,
           description: step.description,
-          estimatedTime: step.duration,
-          priority: 'medium' as const,
+          estimatedTime: step.estimatedTime,
+          priority: step.priority,
           completed: false,
-          action: step.description,
-          benefits: ['Melhora bem-estar', 'Desenvolve habilidades', 'Aumenta consciência']
+          action: step.action,
+          benefits: step.benefits
         }))
         
         setJourneySteps(convertedSteps)

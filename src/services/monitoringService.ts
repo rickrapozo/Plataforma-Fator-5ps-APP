@@ -365,10 +365,9 @@ class MonitoringService {
               responseTime = Date.now() - startTime
               status = error ? 'offline' : 'online'
             } else if (service.name === 'Gemini AI') {
-              // Testar conexão com Gemini
-              const isOnline = await dataService.testGeminiConnection()
-              responseTime = Date.now() - startTime
-              status = isOnline ? 'online' : 'offline'
+              // Serviço Gemini removido
+              responseTime = 0
+              status = 'offline'
             } else {
               // Para outros serviços, simular teste
               responseTime = Math.random() * 100 + 20

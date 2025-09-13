@@ -1,15 +1,11 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
 
-interface SliderProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange'> {
+interface SliderProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'defaultValue' | 'onChange'> {
   value?: number[];
   defaultValue?: number[];
   onValueChange?: (value: number[]) => void;
-  max?: number;
-  min?: number;
-  step?: number;
   orientation?: 'horizontal' | 'vertical';
-  disabled?: boolean;
 }
 
 const Slider = React.forwardRef<HTMLInputElement, SliderProps>(

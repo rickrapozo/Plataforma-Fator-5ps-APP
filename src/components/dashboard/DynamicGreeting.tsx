@@ -1,184 +1,98 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Sparkles, Sun, Moon, Sunset, Stars, Brain, Loader2, Quote } from 'lucide-react'
+import { Sun, Moon, Coffee, Sunset } from 'lucide-react'
 import { useAppStore } from '../../stores/useAppStore'
-import { geminiService } from '../../services/geminiService'
 import { getCapitalizedFirstName } from '../../utils/nameUtils'
+import DailyAffirmation from './DailyAffirmation'
+import GoldenParticles from './GoldenParticles'
 
 interface DynamicGreetingProps {
   className?: string
 }
 
 const DynamicGreeting: React.FC<DynamicGreetingProps> = ({ className = '' }) => {
-  const { user, streak, dailyProtocol } = useAppStore()
-  const [greeting, setGreeting] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
-  const [isAIGenerated, setIsAIGenerated] = useState(false)
-  const [currentQuote, setCurrentQuote] = useState<{
-    quote: string
-    author: string
-    context: string
-  } | null>(null)
-  const [quoteLoading, setQuoteLoading] = useState(false)
+  const { user, streak } = useAppStore()
 
-  const getTimeOfDay = (): 'dawn' | 'morning' | 'afternoon' | 'evening' => {
+  // Determina o período do dia e ícone correspondente
+  const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' | 'night' => {
     const hour = new Date().getHours()
-    
-    // Boa madrugada: 00:01h até 4:59h
-    if (hour >= 0 && hour <= 4) return 'dawn'
-    // Bom dia: 5h até 12h
-    if (hour >= 5 && hour <= 12) return 'morning'
-    // Boa tarde: 12:01h até 18h
-    if (hour >= 13 && hour <= 18) return 'afternoon'
-    // Boa noite: 18:01h até 00h
-    return 'evening'
+    if (hour >= 5 && hour < 12) return 'morning'
+    if (hour >= 12 && hour < 18) return 'afternoon'
+    if (hour >= 18 && hour < 22) return 'evening'
+    return 'night'
   }
 
-  const getGreetingIcon = () => {
+  const getGreetingData = () => {
     const timeOfDay = getTimeOfDay()
-    switch (timeOfDay) {
-      case 'dawn': return { icon: Stars, gradient: 'from-indigo-600 to-purple-600' }
-      case 'morning': return { icon: Sun, gradient: 'from-amber-400 to-orange-500' }
-      case 'afternoon': return { icon: Sunset, gradient: 'from-orange-400 to-red-500' }
-      case 'evening': return { icon: Moon, gradient: 'from-indigo-400 to-purple-500' }
-    }
-  }
-
-  const getLastActivity = () => {
-    const activities = []
-    if (dailyProtocol.p1_affirmations.length > 0) activities.push('afirmações')
-    if (dailyProtocol.p2_feeling) activities.push('registro de sentimentos')
-    if (dailyProtocol.p3_peak_state_completed) activities.push('estado peak')
-    if (dailyProtocol.p4_completed) activities.push('ação mínima viável')
-    if (dailyProtocol.p5_victory) activities.push('reflexão noturna')
+    const firstName = getCapitalizedFirstName(user?.name || 'Transformador')
     
-    return activities.length > 0 ? activities[activities.length - 1] : 'nenhuma atividade hoje'
-  }
-
-  const getRecentProgress = () => {
-    return {
-      affirmationsCount: dailyProtocol.p1_affirmations.length,
-      hasFeeling: !!dailyProtocol.p2_feeling,
-      peakStateCompleted: dailyProtocol.p3_peak_state_completed,
-      actionCompleted: dailyProtocol.p4_completed,
-      reflectionCompleted: !!(dailyProtocol.p5_victory && dailyProtocol.p5_gratitude)
-    }
-  }
-
-  const isFirstTime = () => {
-    return streak === 0 && Object.values(dailyProtocol).every(value => 
-      Array.isArray(value) ? value.length === 0 : !value
-    )
-  }
-
-  const generateMotivationalQuote = async () => {
-    setQuoteLoading(true)
-    try {
-      const quote = await geminiService.generateMotivationalQuote({
-        timeOfDay: getTimeOfDay(),
-        currentGoals: ['desenvolvimento pessoal', 'transformação mental'],
-        recentAchievements: streak > 0 ? [`${streak} dias de consistência`] : []
-      })
-      setCurrentQuote(quote)
-    } catch (error) {
-      console.error('Erro ao gerar citação motivacional:', error)
-    } finally {
-      setQuoteLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    const generateGreeting = async () => {
-      setIsLoading(true)
-      const firstName = getCapitalizedFirstName(user?.name || 'Usuário')
-      
-      try {
-        const dynamicGreeting = await geminiService.generateDynamicGreeting({
-          name: firstName,
-          timeOfDay: getTimeOfDay(),
-          streak,
-          lastActivity: getLastActivity(),
-          recentProgress: getRecentProgress(),
-          isFirstTime: isFirstTime()
-        })
-        
-        setGreeting(dynamicGreeting)
-        setIsAIGenerated(true)
-      } catch (error) {
-        console.error('Erro ao gerar saudação dinâmica:', error)
-        // Fallback para saudação padrão
-        const timeOfDay = getTimeOfDay()
-        const fallbackGreetings = {
-          morning: `Bom dia, ${firstName}! Pronto para alinhar sua mente e criar um dia próspero?`,
-          afternoon: `Olá, ${firstName}! Como está a energia dos seus 5Ps? Vamos recalibrar para uma tarde produtiva.`,
-          evening: `Boa noite, ${firstName}! É hora de refletir sobre suas conquistas e preparar sua mente para um descanso poderoso.`
+    switch (timeOfDay) {
+      case 'morning':
+        return {
+          icon: Sun,
+          gradient: 'from-amber-400 to-orange-500',
+          message: `Bom dia, ${firstName}! Pronto para um dia de transformação?`
         }
-        setGreeting(fallbackGreetings[timeOfDay])
-        setIsAIGenerated(false)
-      } finally {
-        setIsLoading(false)
-      }
+      case 'afternoon':
+        return {
+          icon: Coffee,
+          gradient: 'from-orange-400 to-red-500',
+          message: `Boa tarde, ${firstName}! Continue mantendo o foco em seus objetivos.`
+        }
+      case 'evening':
+        return {
+          icon: Sunset,
+          gradient: 'from-orange-500 to-purple-500',
+          message: `Boa noite, ${firstName}! Hora de refletir sobre as conquistas do dia.`
+        }
+      case 'night':
+        return {
+          icon: Moon,
+          gradient: 'from-indigo-400 to-purple-500',
+          message: `Boa madrugada, ${firstName}! Um novo dia está nascendo cheio de possibilidades.`
+        }
     }
+  }
 
-    generateGreeting()
-    generateMotivationalQuote()
-  }, [user, streak, dailyProtocol])
-
-  // Rotação automática de citações a cada 30 segundos
-  useEffect(() => {
-    const interval = setInterval(() => {
-      generateMotivationalQuote()
-    }, 30000) // 30 segundos
-
-    return () => clearInterval(interval)
-  }, [])
-
-  const greetingData = getGreetingIcon()
+  const greetingData = getGreetingData()
   const GreetingIcon = greetingData.icon
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`relative text-center py-8 overflow-hidden ${className}`}
+      className={`relative overflow-hidden rounded-3xl bg-gradient-to-br from-deep-navy via-royal-purple to-deep-navy p-8 shadow-2xl ${className}`}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
     >
-      {/* Background animated gradient */}
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-royal-gold/5 via-transparent to-royal-purple/10">
+        <GoldenParticles particleCount={25} />
+      </div>
       <motion.div
-        className={`absolute inset-0 bg-gradient-to-r ${greetingData.gradient} opacity-10 rounded-3xl`}
+        className="absolute top-0 right-0 w-32 h-32 bg-royal-gold/10 rounded-full blur-3xl"
         animate={{
-          scale: [1, 1.05, 1],
-          opacity: [0.1, 0.15, 0.1]
+          scale: [1, 1.2, 1],
+          opacity: [0.3, 0.6, 0.3],
         }}
         transition={{
           duration: 4,
           repeat: Infinity,
-          ease: "easeInOut"
+          ease: "easeInOut",
         }}
       />
-      
-      {/* Floating particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-royal-gold/30 rounded-full"
-            animate={{
-              y: [-20, -100],
-              x: [Math.random() * 300, Math.random() * 300],
-              opacity: [0, 1, 0]
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2
-            }}
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: '100%'
-            }}
-          />
-        ))}
-      </div>
+      <motion.div
+        className="absolute bottom-0 left-0 w-24 h-24 bg-royal-purple/20 rounded-full blur-2xl"
+        animate={{
+          scale: [1.2, 1, 1.2],
+          opacity: [0.4, 0.7, 0.4],
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 1,
+        }}
+      />
 
       <div className="relative z-10">
         {/* Greeting icon with animation */}
@@ -190,15 +104,6 @@ const DynamicGreeting: React.FC<DynamicGreetingProps> = ({ className = '' }) => 
         >
           <div className={`p-3 rounded-full bg-gradient-to-r ${greetingData.gradient} shadow-lg relative`}>
             <GreetingIcon className="w-6 h-6 text-white" />
-            {isAIGenerated && (
-              <motion.div
-                className="absolute -top-1 -right-1 w-4 h-4 bg-royal-gold rounded-full flex items-center justify-center"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <Brain className="w-2 h-2 text-white" />
-              </motion.div>
-            )}
           </div>
         </motion.div>
 
@@ -209,86 +114,28 @@ const DynamicGreeting: React.FC<DynamicGreetingProps> = ({ className = '' }) => 
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
         >
-          {isLoading ? (
-            <div className="flex items-center justify-center gap-3">
-              <Loader2 className="w-6 h-6 text-royal-gold animate-spin" />
-              <p className="text-pearl-white/80 text-lg">Personalizando sua saudação...</p>
-            </div>
-          ) : (
-            <>
-              <h1 className="text-white text-3xl md:text-4xl font-heading font-bold mb-3 bg-gradient-to-r from-white to-pearl-white bg-clip-text text-transparent leading-tight">
-                {greeting}
-              </h1>
-              
-              {/* Motivational Quote Section */}
-              <motion.div
-                className="mb-6 p-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                {quoteLoading ? (
-                  <div className="flex items-center justify-center gap-3 py-4">
-                    <Loader2 className="w-5 h-5 text-royal-gold animate-spin" />
-                    <p className="text-pearl-white/70 text-sm">Buscando inspiração...</p>
-                  </div>
-                ) : currentQuote ? (
-                  <motion.div
-                    key={currentQuote.quote}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5 }}
-                    className="text-center"
-                  >
-                    <Quote className="w-6 h-6 text-royal-gold mx-auto mb-3 opacity-60" />
-                    <motion.p 
-                      className="text-pearl-white/90 text-lg font-medium italic mb-3 leading-relaxed"
-                      animate={{ opacity: [0.8, 1, 0.8] }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                    >
-                      "{currentQuote.quote}"
-                    </motion.p>
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="h-px bg-royal-gold/30 flex-1 max-w-12"></div>
-                      <p className="text-royal-gold text-sm font-semibold">
-                        {currentQuote.author}
-                      </p>
-                      <div className="h-px bg-royal-gold/30 flex-1 max-w-12"></div>
-                    </div>
-                    <p className="text-pearl-white/60 text-xs mt-2">
-                      {currentQuote.context}
-                    </p>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    className="flex items-center justify-center gap-2 py-4"
-                    animate={{ opacity: [0.7, 1, 0.7] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <Sparkles className="w-5 h-5 text-royal-gold" />
-                    <p className="text-pearl-white/90 text-lg font-medium">
-                      {isAIGenerated ? 'Mensagem personalizada por IA' : 'Sua jornada de transformação continua'}
-                    </p>
-                    <Sparkles className="w-5 h-5 text-royal-gold" />
-                  </motion.div>
-                )}
-              </motion.div>
+          <h1 className="text-white text-3xl md:text-4xl font-heading font-bold mb-6 bg-gradient-to-r from-white to-pearl-white bg-clip-text text-transparent leading-tight text-center">
+            {greetingData.message}
+          </h1>
+          
+          {/* Seção de Afirmação Diária */}
+          <DailyAffirmation className="mb-6" />
 
-              {/* Streak indicator */}
-              {streak > 0 && (
-                <motion.div
-                  className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  <div className="w-2 h-2 bg-royal-gold rounded-full animate-pulse" />
-                  <span className="text-pearl-white/90 text-sm font-medium text-center w-full block">
-                    {streak} {streak === 1 ? 'dia' : 'dias'} de consistência
-                  </span>
-                </motion.div>
-              )}
-            </>
+          {/* Streak indicator */}
+          {streak > 0 && (
+            <motion.div
+              className="flex justify-center"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
+                <div className="w-2 h-2 bg-royal-gold rounded-full animate-pulse" />
+                <span className="text-pearl-white/90 text-sm font-medium">
+                  {streak} {streak === 1 ? 'dia' : 'dias'} de consistência
+                </span>
+              </div>
+            </motion.div>
           )}
         </motion.div>
       </div>

@@ -4,10 +4,11 @@ import { cn } from '../../utils/cn';
 interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'secondary' | 'destructive' | 'outline';
   children: React.ReactNode;
+  value?: string;
 }
 
 const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
-  ({ className, variant = 'default', children, ...props }, ref) => {
+  ({ className, variant = 'default', children, value, ...props }, ref) => {
     const variants = {
       default: 'bg-primary hover:bg-primary/80 border-transparent text-primary-foreground',
       secondary: 'bg-secondary hover:bg-secondary/80 border-transparent text-secondary-foreground',

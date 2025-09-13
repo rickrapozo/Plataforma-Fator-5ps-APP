@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Calendar, TrendingUp, Award, Target, Brain, Heart, Zap, Eye, BarChart3, Download, Share2, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAppStore } from '../../stores/useAppStore'
-import { geminiService } from '../../services/geminiService'
+// Removed geminiService import - using mock data for now
 import { getCapitalizedFirstName } from '../../utils/nameUtils'
 
 interface MonthlyReport {

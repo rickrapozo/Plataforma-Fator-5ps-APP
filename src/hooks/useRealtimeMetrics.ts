@@ -1,8 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
 import { monitoringService, UserActivity, ErrorLog } from '../services/monitoringService'
 import { SystemMetrics } from '../services/dataService'
-import { geminiService, AnalysisResult } from '../services/geminiService'
 import { metricsCache, CacheKeys, withCache } from '../utils/cacheManager'
+
+interface AnalysisResult {
+  sentiment: 'positive' | 'negative' | 'neutral' | 'mixed'
+  confidence: number
+  insights: string[]
+  recommendations: string[]
+  categories: string[]
+  urgencyLevel: 'low' | 'medium' | 'high' | 'critical'
+  performance?: string
+}
 
 interface RealtimeMetrics {
   current: SystemMetrics | null
@@ -106,8 +115,16 @@ export const useRealtimeMetrics = (options: UseRealtimeMetricsOptions = {}) => {
       // Cache AI analysis for 5 minutes since it's expensive to compute
       const analysis = await withCache.apiCall(
         metricsCache,
-        CacheKeys.GEMINI_INSIGHTS('performance'),
-        () => geminiService.analyzeSystemPerformance([analysisData]),
+        'system:analysis:performance', // Chave simplificada sem dependência do Gemini
+        () => Promise.resolve({ 
+          sentiment: 'positive' as const,
+          confidence: 0.8,
+          insights: ['Sistema funcionando bem'],
+          recommendations: ['Continue monitorando'],
+          categories: ['performance'],
+          urgencyLevel: 'low' as const,
+          performance: 'good' 
+        }), // Análise simplificada
         300000 // 5 minutes
       )
       

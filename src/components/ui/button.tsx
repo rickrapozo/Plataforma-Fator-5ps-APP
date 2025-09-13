@@ -28,6 +28,22 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       icon: 'h-10 w-10'
     };
 
+    // Separate motion props from button props to avoid conflicts
+    const { 
+      onAnimationStart, 
+      onAnimationEnd, 
+      onDragStart, 
+      onDragEnd, 
+      onDrag,
+      onTouchStart,
+      onTouchEnd,
+      onTouchMove,
+      onPointerDown,
+      onPointerUp,
+      onPointerMove,
+      ...buttonProps 
+    } = props;
+
     return (
       <motion.button
         whileHover={{ scale: 1.02 }}
@@ -39,7 +55,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           className
         )}
         ref={ref}
-        {...props}
+        {...buttonProps}
       >
         {children}
       </motion.button>

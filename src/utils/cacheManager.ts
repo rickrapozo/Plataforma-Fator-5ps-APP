@@ -237,7 +237,7 @@ export const CacheKeys = {
   // System
   SYSTEM_CONFIG: 'system:config',
   SERVICE_STATUS: 'system:services',
-  GEMINI_INSIGHTS: (type: string) => `system:gemini:${type}`,
+  // GEMINI_INSIGHTS: (type: string) => `system:gemini:${type}`, // Removido
 }
 
 // Utility functions for common caching patterns

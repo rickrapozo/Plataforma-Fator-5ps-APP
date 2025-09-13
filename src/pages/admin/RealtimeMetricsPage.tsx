@@ -414,7 +414,7 @@ const RealtimeMetricsPage: React.FC = () => {
             <div className="mt-6 pt-6 border-t border-white/10">
               <div className="flex items-center justify-between">
                 <p className="text-pearl-white/80">
-                  <strong>Resumo:</strong> {metrics.analysis?.summary}
+                  <strong>Insights:</strong> {metrics.analysis?.insights?.join(', ')}
                 </p>
                 <div className="text-right">
                   <p className="text-pearl-white/60 text-sm">Confiança</p>
